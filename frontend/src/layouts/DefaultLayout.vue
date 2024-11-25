@@ -1,8 +1,6 @@
 <template>
     <div>
-        <header>
-            <h1>Header</h1>
-        </header>
+        <AppHeader />
         <main>
             <router-view />
         </main>
@@ -11,3 +9,13 @@
         </footer>
     </div>
 </template>
+
+<script>
+import AppHeader from '@/components/AppHeader.vue';
+
+export default {
+  components: {
+    AppHeader,
+  },
+};
+</script>
