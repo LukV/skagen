@@ -1,8 +1,5 @@
-// Styles
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
-
-// Vuetify
 import { createVuetify } from 'vuetify'
 
 export default createVuetify({
@@ -14,7 +11,7 @@ export default createVuetify({
           primary: '#4b26d0',       // Main purple
           secondary: '#abd026',     // Complementary green
           accent: '#f88d6e',        // Button highlight
-          background: '#efe7fb',    // Background
+          background: '#fafafa',    // Background
           surface: '#ffffff',       // Cards and modals
           textPrimary: '#212121',   // Headers
           textSecondary: '#424242', // Body text
@@ -24,6 +21,6 @@ export default createVuetify({
     },
   },
   typography: {
-    defaultFontFamily: 'Inter',
+    defaultFontFamily: 'Inter, sans-serif',
   },
 });

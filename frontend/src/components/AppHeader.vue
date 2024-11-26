@@ -1,24 +1,53 @@
 <template>
   <v-app-bar color="background" flat>
-    <v-toolbar-title class="text-primary">
-      Skågen
+    <!-- Logo and Navigation Links -->
+    <v-toolbar-title>
+      <span class="logo">Skågen</span>
     </v-toolbar-title>
+
+    <v-btn-group>
+      <v-btn text class="nav-link">Home</v-btn>
+      <v-btn text class="nav-link">About</v-btn>
+    </v-btn-group>
+
     <v-spacer />
-    <v-btn text color="textPrimary">Home</v-btn>
-    <v-btn text color="textPrimary">About</v-btn>
-    <v-btn color="primary" class="ml-4">Sign Up</v-btn>
-    <v-btn outlined color="primary" class="ml-2">Login</v-btn>
+
+    <!-- Sign Up and Login -->
+    <v-btn text class="signup-button">Sign Up</v-btn>
+    <v-btn outlined color="primary" class="login-button">Login</v-btn>
   </v-app-bar>
 </template>
 
 <script>
 export default {
-  name: 'AppHeader',
+  name: "AppHeader",
 };
 </script>
 
 <style scoped>
-.text-primary {
+/* Styling for the logo */
+.logo {
+  font-family: "Poppins", sans-serif;
+  font-weight: 300;
+  font-size: 24px;
   color: var(--clr-primary);
+}
+
+/* Styling for navigation links */
+.nav-link {
+  text-transform: none; /* Prevent uppercase */
+  font-size: 1rem; /* Adjust for readability */
+  margin-left: 1rem;
+}
+
+/* Styling for buttons */
+.signup-button {
+  text-transform: none;
+  font-size: 1rem;
+}
+
+.login-button {
+  text-transform: none;
+  font-size: 1rem;
 }
 </style>
