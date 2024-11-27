@@ -1,11 +1,10 @@
 :root {
-    --clr-primary: #4b26d0;
-    --clr-secondary: #abd026;
-    --clr-accent: #f88d6e;
-    --clr-background: #efe7fb;
-    --clr-surface: #ffffff;
-    --clr-header-text: #212121;
-    --clr-body-text: #424242;
-    --clr-subtext: #757575;
-  }
-  
+  --clr-primary: #5a34d0; /* Softer purple */
+  --clr-secondary: #2668c8; /* Cooler blue */
+  --clr-accent: #c02694; /* Warmer magenta */
+  --clr-background: #f5f3fa; /* Clean, neutral lavender tint */
+  --clr-surface: #ffffff; /* No change */
+  --clr-header-text: #1a1a1a; /* Slightly darker */
+  --clr-body-text: #383838; /* Better contrast */
+  --clr-subtext: #757575; /* More visible muted text */
+}

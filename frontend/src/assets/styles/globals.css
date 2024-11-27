@@ -1,14 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600&display=swap');
+
 html {
-    font-family: 'Inter', sans-serif;
-    line-height: 1.5;
-    font-size: 1rem;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  font-family: 'Inter', sans-serif; /* Body text */
 }
 
-h1,
-h2,
-h3 {
-    font-family: 'Inter', sans-serif;
+h1, h2, h3 {
+  font-family: 'Inter', sans-serif; /* Headers */
+}
+
+.logo-text {
+  font-family: 'Poppins', sans-serif; /* Logo text */
 }

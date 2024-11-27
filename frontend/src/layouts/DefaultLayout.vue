@@ -4,9 +4,6 @@
         <main>
             <router-view />
         </main>
-        <footer>
-            <p>Footer</p>
-        </footer>
     </div>
 </template>
 

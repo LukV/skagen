@@ -4,6 +4,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import HomePage from '@/pages/HomePage.vue';
 import LoginPage from '@/pages/LoginPage.vue';
 import NotFoundPage from '@/pages/NotFoundPage.vue'; 
+import AboutPage from '@/pages/AboutPage.vue';
 
 const routes = [
     {
@@ -12,6 +13,7 @@ const routes = [
         children: [
             { path: '', name: 'Home', component: HomePage },
             { path: 'home', name: 'HomeAlias', component: HomePage }, 
+            { path: 'about', name: 'About', component: AboutPage }, 
         ],
     },
     {
