@@ -11,3 +11,7 @@ h1, h2, h3 {
 .logo-text {
   font-family: 'Poppins', sans-serif; /* Logo text */
 }
+
+.v-btn .v-btn__content {
+  padding: 0 20px;
+}

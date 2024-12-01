@@ -5,7 +5,7 @@ import { createVuetify } from 'vuetify'
 export default createVuetify({
   defaults: {
     VBtn: {
-      style: 'text-transform: none;',
+      style: 'text-transform: none; letter-spacing: 0;',
     },
   },
   theme: {
@@ -13,10 +13,10 @@ export default createVuetify({
     themes: {
       light: {
         colors: {
-          primary: '#4b26d0',       // Main purple
+          primary: '#5548c0',       // Main purple
           secondary: '#2668c8',     // Complementary green
           accent: '#c02694',        // Button highlight
-          background: '#fafafa',    // Background
+          background: '#f8f8fc',    // Background
           surface: '#ffffff',       // Cards and modals
           textPrimary: '#1a1a1a',   // Headers
           textSecondary: '#383838', // Body text

@@ -1,20 +1,22 @@
 <template>
-  <v-app-bar color="background" scroll-behavior="elevate">
+  <v-app-bar color="surface" :elevation="0">
     <div class="d-flex align-center">
       <v-app-bar-title>
         <span class="logo ml-4 mr-2">Skågen</span>
       </v-app-bar-title>
-      <div class="d-flex align-center ml-4">
-        <div class="hidden-sm-and-down">
-          <router-link to="/home" class="nav-link mt-1 mr-4">Home</router-link>
-          <router-link to="/about" class="nav-link mt-1 mr-4">About</router-link>
+      <div class="d-flex align-center">
+        <div class="hidden-sm-and-down mt-1 ml-4">
+          <router-link to="/home" class="nav-link mr-4">Home</router-link>
+          <router-link to="/about" class="nav-link mr-4">About</router-link>
         </div>
       </div>
     </div>
     <template v-slot:append>
+      <div class="hidden-sm-and-down mt-1">
+        <router-link to="/auth/signup" class="nav-link mr-4">Sign up</router-link>
+      </div>
       <div class="hidden-sm-and-down">
-        <router-link to="/about" class="nav-link mt-1 mr-4">Sign up</router-link>
-        <v-btn class="login-button mr-4 mt-1" rounded="xl" elevation="1">Login</v-btn>
+        <v-btn class="login-button mr-4 mt-1" rounded="xl" elevation="0" color="primary" href="/auth/login">Login</v-btn>
       </div>
       <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer" class="hidden-md-and-up"></v-app-bar-nav-icon>
     </template>
@@ -28,10 +30,10 @@
         <router-link to="/about" class="drawer-link">About</router-link>
       </v-list-item>
       <v-list-item>
-        <router-link to="/signup" class="drawer-link">Sign up</router-link>
+        <router-link to="/auth/signup" class="drawer-link">Sign up</router-link>
       </v-list-item>
       <v-list-item>
-        <router-link to="/login" class="drawer-link">Login</router-link>
+        <router-link to="/auth/login" class="drawer-link">Login</router-link>
       </v-list-item>
     </v-list>
   </v-navigation-drawer>
@@ -53,6 +55,10 @@ export default {
 </script>
 
 <style scoped>
+.v-btn {
+  padding: 0 16px;
+}
+
 .logo {
   font-family: "Poppins", sans-serif;
   font-weight: 300;
@@ -60,7 +66,7 @@ export default {
 }
 
 .login-button {
-  background-color: var(--clr-secondary) !important;
+  background-color: var(--clr-primary) !important;
   color: var(--clr-surface) !important;
   border-radius: 8px;
   text-transform: none;
@@ -76,7 +82,7 @@ export default {
 
 a {
   font-size: 14px;
-  color: var(--clr-secondary);
+  color: var(--clr-primary);
   text-decoration: none;
   transition: color 0.6s ease;
 }

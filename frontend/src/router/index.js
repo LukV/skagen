@@ -5,6 +5,7 @@ import HomePage from '@/pages/HomePage.vue';
 import LoginPage from '@/pages/LoginPage.vue';
 import NotFoundPage from '@/pages/NotFoundPage.vue'; 
 import AboutPage from '@/pages/AboutPage.vue';
+import SignUpPage from '@/pages/SignUpPage.vue';
 
 const routes = [
     {
@@ -17,10 +18,11 @@ const routes = [
         ],
     },
     {
-        path: '/login',
+        path: '/auth',
         component: AuthLayout,
         children: [
-            { path: '', name: 'Login', component: LoginPage },
+            { path: 'login', name: 'Login', component: LoginPage },
+            { path: 'signup', name: 'SignUp', component: SignUpPage },
         ],
     },
     {
