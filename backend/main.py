@@ -4,12 +4,16 @@ from fastapi.staticfiles import StaticFiles
 from core.logging import configure_logging
 from core.config import setup_cors
 from routers import users, auth
+from db.database import Base, engine
 
 # Configure logging
 configure_logging()
 
 # Create FastAPI app instance
 app = FastAPI()
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 # Initialize configurations
 setup_cors(app)
