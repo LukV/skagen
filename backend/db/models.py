@@ -10,4 +10,5 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=True)
     icon = Column(String, nullable=True)
+    role = Column(String, default='user')
     date_created = Column(DateTime(timezone=True), server_default=func.now()) # pylint: disable=E1102

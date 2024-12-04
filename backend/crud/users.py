@@ -16,7 +16,8 @@ ICON_DIR.mkdir(parents=True, exist_ok=True)
 
 def create_user(
     db: Session,
-    user: user_schemas.UserCreate
+    user: user_schemas.UserCreate,
+    role: str = 'user'
 ) -> models.User:
     """
     Creates a new user in the database.
@@ -28,7 +29,8 @@ def create_user(
         username=user.username,
         email=user.email,
         password=hashed_password,
-        icon=user.icon
+        icon=user.icon,
+        role=role
     )
     db.add(db_user)
     db.commit()
@@ -42,6 +44,24 @@ def update_user(
 ) -> models.User:
     """
     Updates an existing user's details in the database.
+    """
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    update_data = user_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def admin_update_user(
+    db: Session,
+    user_id: str,
+    user_update: user_schemas.AdminUserUpdate
+) -> models.User:
+    """
+    Admin can update any user's details, including role.
     """
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if not db_user:

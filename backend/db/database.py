@@ -2,8 +2,7 @@ import os
 from pathlib import Path
 import dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 env_path = Path(__file__).resolve().parent / ".env"
 dotenv.load_dotenv(dotenv_path=env_path)

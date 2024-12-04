@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, EmailStr, model_validator
 
 class PasswordValidationMixin:
     """Mixin to add password validation logic."""
@@ -58,6 +58,12 @@ class UserUpdate(BaseModel):
         description="The updated email address. Must be unique."
     )
 
+class AdminUserUpdate(UserUpdate):
+    role: Optional[str] = Field(
+        None,
+        description="The role of the user. Only settable by admins."
+    )
+
 class UserResponse(BaseModel):
     id: str = Field(
         ...,
@@ -80,5 +86,7 @@ class UserResponse(BaseModel):
         description="The timestamp when the user was created."
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+class AdminUserResponse(UserResponse):
+    role: str  # Include 'role' only for admin responses
