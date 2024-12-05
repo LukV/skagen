@@ -1,20 +1,15 @@
+// store/index.js
 import { createStore } from 'vuex';
+import auth from './modules/auth';
+import user from './modules/user';
+import notifications from './modules/notifications';
 
-export default createStore({
-    state: {
-        message: 'Hello, Vuex!',
-    },
-    getters: {
-        message: (state) => state.message,
-    },
-    mutations: {
-        setMessage(state, newMessage) {
-            state.message = newMessage;
-        },
-    },
-    actions: {
-        updateMessage({ commit }, newMessage) {
-            commit('setMessage', newMessage);
-        },
-    },
+const store = createStore({
+  modules: {
+    auth,
+    user,
+    notifications,
+  },
 });
+
+export default store;
