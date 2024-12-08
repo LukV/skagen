@@ -1,0 +1,112 @@
+/* globals.css */
+@import './reset.css'; /* import reset first */
+
+:root {
+  /* Color Palette */
+  --color-primary: #570ce5;
+  --color-primary-lighter: #8254e5;
+  --color-secondary: #d026ab;
+  --color-text: #2c3e50;
+  --color-text-light: #ffffff;
+  --color-accent: #fea303;
+  --color-background: #ffffff;
+  --color-background-darker: #fafafa;
+  --color-link: #2656d0;
+  --color-link-lighter: #738bdf;
+
+  /* Typography */
+  /* You have Inter, Poppins, Merriweather loaded from index.html. 
+     Decide on which to use for body vs headings. For example: */
+  --font-base: 'Inter', sans-serif;
+  --font-heading: 'Poppins', sans-serif;
+  --font-serif: 'Merriweather', serif;
+
+  --font-size-base: 14px;
+  --font-weight-normal: 200;
+  --font-weight-bold: 400;
+
+  /* Spacing Scale */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Breakpoints */
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 900px;
+  --breakpoint-lg: 1200px;
+}
+
+/* Margin Utilities */
+
+/* Single Direction Margins */
+.mt-xs { margin-top: var(--spacing-xs); }
+.mb-xs { margin-bottom: var(--spacing-xs); }
+.ml-xs { margin-left: var(--spacing-xs); }
+.mr-xs { margin-right: var(--spacing-xs); }
+
+.mt-sm { margin-top: var(--spacing-sm); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.ml-sm { margin-left: var(--spacing-sm); }
+.mr-sm { margin-right: var(--spacing-sm); }
+
+.mt-md { margin-top: var(--spacing-md); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.ml-md { margin-left: var(--spacing-md); }
+.mr-md { margin-right: var(--spacing-md); }
+
+.mt-lg { margin-top: var(--spacing-lg); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.ml-lg { margin-left: var(--spacing-lg); }
+.mr-lg { margin-right: var(--spacing-lg); }
+
+.mt-xl { margin-top: var(--spacing-xl); }
+.mb-xl { margin-bottom: var(--spacing-xl); }
+.ml-xl { margin-left: var(--spacing-xl); }
+.mr-xl { margin-right: var(--spacing-xl); }
+
+/* Vertical and Horizontal Margins */
+.my-xs { margin-top: var(--spacing-xs); margin-bottom: var(--spacing-xs); }
+.mx-xs { margin-left: var(--spacing-xs); margin-right: var(--spacing-xs); }
+
+.my-sm { margin-top: var(--spacing-sm); margin-bottom: var(--spacing-sm); }
+.mx-sm { margin-left: var(--spacing-sm); margin-right: var(--spacing-sm); }
+
+.my-md { margin-top: var(--spacing-md); margin-bottom: var(--spacing-md); }
+.mx-md { margin-left: var(--spacing-md); margin-right: var(--spacing-md); }
+
+.my-lg { margin-top: var(--spacing-lg); margin-bottom: var(--spacing-lg); }
+.mx-lg { margin-left: var(--spacing-lg); margin-right: var(--spacing-lg); }
+
+.my-xl { margin-top: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
+.mx-xl { margin-left: var(--spacing-xl); margin-right: var(--spacing-xl); }
+
+/* Classes for no margin */
+.m-0 { margin: 0 !important; }
+.mt-0 { margin-top: 0 !important; }
+.mb-0 { margin-bottom: 0 !important; }
+.ml-0 { margin-left: 0 !important; }
+.mr-0 { margin-right: 0 !important; }
+.mx-0 { margin-left: 0 !important; margin-right: 0 !important; }
+.my-0 { margin-top: 0 !important; margin-bottom: 0 !important; }
+
+body {
+  font-family: var(--font-base);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background: var(--color-background);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-md);
+}
+
+p {
+  margin-bottom: var(--spacing-md);
+}
