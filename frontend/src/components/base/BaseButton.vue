@@ -31,7 +31,6 @@
   .base-button {
     font-family: var(--font-base, "Inter", sans-serif);
     font-size: var(--font-size-base);
-    padding: var(--spacing-sm, 10px) var(--spacing-md, 20px);
     border: 2px solid transparent;
     border-radius: 4px;
     cursor: pointer;
@@ -88,7 +87,7 @@
   }
   
   /* Icon-only buttons without border */
-  .base-button--no-border {
+  .base-button--text {
     border: none;
     background: none;
   }
@@ -108,16 +107,10 @@
   
   /* Sizes */
   .base-button--sm {
-    padding: var(--spacing-xs, 5px) var(--spacing-sm, 10px);
     font-size: 12px;
   }
-  
-  .base-button--md {
-    padding: var(--spacing-sm, 10px) var(--spacing-md, 20px);
-  }
-  
+    
   .base-button--lg {
-    padding: var(--spacing-md, 15px) var(--spacing-lg, 30px);
     font-size: 18px;
   }
   </style>

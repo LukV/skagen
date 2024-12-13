@@ -1,121 +1,267 @@
 <template>
-  <div id="app">
-    <img class="mt-lg" alt="Skågen logo" width="100" src="./assets/images/skagen-icon.png" />
-    <h1 class="mt-lg">The Birth Of The Skågen!</h1>
-    <div class="button-container">
-      <!-- Primary Button -->
-      <BaseButton variant="primary">Primary Button</BaseButton>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <transition name="slide-sidebar">
+      <AppSidebar
+        v-if="!isMobile || sidebarOpen"
+        class="app-sidebar"
+        :collapsed="isCollapsed"
+        :is-logged-in="isLoggedIn"
+        :user-name="userName"
+        @toggle-collapse="toggleSidebar"
+        @sign-up="onSignUp"
+        @login="onLogin"
+        @logout="onLogout"
+        @toggle-user-overlay="toggleUserOverlay"
+      />
+    </transition>
 
-      <!-- Secondary Button -->
-      <BaseButton variant="secondary">Secondary Button</BaseButton>
+    <!-- Mobile Menu Overlay -->
+    <transition name="fade">
+      <div v-if="isMobile && sidebarOpen" class="mobile-overlay">
+        <div class="mobile-overlay-header">
+          <BaseButton variant="text" @click="sidebarOpen = false">
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </BaseButton>
+        </div>
 
-      <!-- Button with Icon -->
-      <BaseButton variant="primary">
-        <CheckIcon class="icon" /> With Icon
-      </BaseButton>
+        <div class="mobile-overlay-content">
+          <!-- Overlay menu items go here -->
+          <div class="mobile-auth">
+            <AuthStatus
+              :collapsed="false"
+              :is-logged-in="isLoggedIn"
+              :user-name="userName"
+              @sign-up="onSignUp"
+              @login="onLogin"
+              @logout="onLogout"
+              @toggle-user-overlay="toggleUserOverlay"
+            />
+          </div>
+        </div>
+      </div>
+    </transition>
 
-      <!-- Icon-Only Button -->
-      <BaseButton variant="primary" :isIconOnly="true">
-        <CheckIcon class="icon-only" />
-      </BaseButton>
-
-      <!-- Icon-Only Button Without Border -->
-      <BaseButton variant="secondary">
-        <CheckIcon class="icon-only" />
-      </BaseButton>
-
-      <!-- Fully Rounded Button -->
-      <BaseButton variant="secondary" :rounded="true">
-        Rounded Button
-      </BaseButton>
-
-      <!-- Small Button -->
-      <BaseButton size="sm">Small Button</BaseButton>
-
-      <!-- Large Button -->
-      <BaseButton size="lg">Large Button</BaseButton>
+    <div class="right-col">
+      <AppHeader @toggle-sidebar="toggleSidebarOpen" />
+      <main class="main-content">
+        <router-view />
+      </main>
     </div>
 
-    <div class="input-container">
-      <h2>Input Fields</h2>
-
-      <!-- Basic Input -->
-      <BaseInput placeholder="Enter your name" label="Name" v-model="formData.name" :required="true" />
-
-      <!-- Password Input -->
-      <BaseInput type="password" placeholder="Enter your password" v-model="formData.password" />
-
-      <!-- Disabled Input -->
-      <BaseInput placeholder="Disabled input" disabled />
-
-      <!-- Custom Input Example -->
-      <BaseInput placeholder="Custom placeholder" v-model="formData.custom" :required="true" />
+    <!-- User overlay (e.g., dropdown or modal) -->
+    <div v-if="userOverlayOpen" class="user-overlay" @click.self="toggleUserOverlay(false)">
+      <div class="user-overlay-content">
+        <!-- Future user overlay content -->
+        <p>User: {{ userName }}</p>
+        <button @click="toggleUserOverlay(false)">Close</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { CheckIcon } from '@heroicons/vue/24/solid';
-import BaseInput from './components/base/BaseInput.vue';
+import { ref, onBeforeUnmount } from 'vue';
+import AppHeader from './components/layout/AppHeader.vue';
+import AppSidebar from './components/layout/AppSidebar.vue';
+import AuthStatus from './components/shared/AuthStatus.vue';
 import BaseButton from './components/base/BaseButton.vue';
 
 export default {
   name: 'App',
-  components: {
-    BaseButton,
-    BaseInput,
-    CheckIcon,
-  },
-  data() {
+  components: { AppHeader, AppSidebar, AuthStatus, BaseButton },
+  setup() {
+    const sidebarOpen = ref(false);
+    const isCollapsed = ref(false);
+    const isLoggedIn = ref(false);
+    const userName = ref(null);
+    const userOverlayOpen = ref(false);
+
+    const isMobile = ref(window.innerWidth <= 600);
+    const handleResize = () => {
+      isMobile.value = window.innerWidth <= 600;
+      if (!isMobile.value) {
+        sidebarOpen.value = false;
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    onBeforeUnmount(() => {
+      window.removeEventListener('resize', handleResize);
+    });
+
+    const toggleSidebar = () => {
+      isCollapsed.value = !isCollapsed.value;
+    };
+
+    const toggleSidebarOpen = () => {
+      sidebarOpen.value = !sidebarOpen.value;
+    };
+
+    const onSignUp = () => {
+      isLoggedIn.value = true;
+      userName.value = "John Doe";
+    };
+
+    const onLogin = () => {
+      isLoggedIn.value = true;
+      userName.value = "John Doe";
+    };
+
+    const onLogout = () => {
+      isLoggedIn.value = false;
+      userName.value = null;
+    };
+
+    const toggleUserOverlay = (force) => {
+      if (typeof force === 'boolean') {
+        userOverlayOpen.value = force;
+      } else {
+        userOverlayOpen.value = !userOverlayOpen.value;
+      }
+    };
+
     return {
-      formData: {
-        name: '',
-        password: '',
-        custom: '',
-      },
+      sidebarOpen,
+      isCollapsed,
+      isMobile,
+      isLoggedIn,
+      userName,
+      userOverlayOpen,
+      toggleSidebar,
+      toggleSidebarOpen,
+      onSignUp,
+      onLogin,
+      onLogout,
+      toggleUserOverlay,
     };
   },
 };
 </script>
 
 <style scoped>
-#app {
-  text-align: center;
-}
-
-.button-container {
+.app-container {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  /* Space between buttons */
-  justify-content: center;
-  align-items: center;
-  margin-top: 24px;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
 }
 
-.input-container {
+/* Mobile Overlay */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-background-darker, #fff);
+}
+
+.mobile-overlay-header {
+  display: flex;
+  justify-content: right;
+  padding: var(--spacing-md);
+  position: relative;
+  background-color: var(--color-background, #fff);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-overlay-close {
+  position: absolute;
+  right: var(--spacing-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
   align-items: center;
-  gap: 16px;
-  margin-top: 32px;
-  width: 100%;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
+  justify-content: center;
+  padding: var(--spacing-sm);
 }
 
-/* TODO: Move to BaseButton.vue */
-
-.icon {
-  width: 1em;
-  height: 1em;
-  vertical-align: middle;
+.mobile-overlay-content {
+  flex: 1;
+  padding: var(--spacing-md);
 }
 
-.icon-only {
-  width: 1.5em;
-  /* Slightly larger for standalone icon */
-  height: 1.5em;
+/* Auth section in mobile overlay */
+.mobile-auth {
+  margin-top: auto; /* Push to the bottom */
+  padding: var(--spacing-lg);
 }
+
+/* Example styling for user overlay */
+.user-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.user-overlay-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.app-sidebar {
+  flex: 0 0 auto;
+  transition: width 0.3s ease;
+  width: 200px;
+}
+
+.app-sidebar.collapsed {
+  width: 50px;
+}
+
+.right-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+}
+
+/* Overlay for mobile */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* On mobile hide sidebar by default */
+@media (max-width: 600px) {
+  .app-sidebar {
+    display: none;
+  }
+
+  /* When sidebarOpen is true, slide it in */
+  .app-sidebar.slide-sidebar-enter-from,
+  .app-sidebar.slide-sidebar-leave-to {
+    transform: translateX(-100%);
+  }
+  .app-sidebar.slide-sidebar-enter-to,
+  .app-sidebar.slide-sidebar-leave-from {
+    transform: translateX(0);
+  }
+}
+
+/* On desktop, no transform needed. Just collapse/expand width. */
 </style>
