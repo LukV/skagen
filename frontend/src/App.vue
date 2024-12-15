@@ -1,64 +1,25 @@
 <template>
   <div class="app-container">
-    <!-- Sidebar -->
     <transition name="slide-sidebar">
       <AppSidebar
         v-if="!isMobile || sidebarOpen"
-        class="app-sidebar"
         :collapsed="isCollapsed"
-        :is-logged-in="isLoggedIn"
-        :user-name="userName"
+        class="app-sidebar"
         @toggle-collapse="toggleSidebar"
-        @sign-up="onSignUp"
-        @login="onLogin"
-        @logout="onLogout"
-        @toggle-user-overlay="toggleUserOverlay"
       />
     </transition>
 
-    <!-- Mobile Menu Overlay -->
-    <transition name="fade">
-      <div v-if="isMobile && sidebarOpen" class="mobile-overlay">
-        <div class="mobile-overlay-header">
-          <BaseButton variant="text" @click="sidebarOpen = false">
-            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-            </svg>
-          </BaseButton>
-        </div>
-
-        <div class="mobile-overlay-content">
-          <!-- Overlay menu items go here -->
-          <div class="mobile-auth">
-            <AuthStatus
-              :collapsed="false"
-              :is-logged-in="isLoggedIn"
-              :user-name="userName"
-              @sign-up="onSignUp"
-              @login="onLogin"
-              @logout="onLogout"
-              @toggle-user-overlay="toggleUserOverlay"
-            />
-          </div>
-        </div>
-      </div>
-    </transition>
-
     <div class="right-col">
-      <AppHeader @toggle-sidebar="toggleSidebarOpen" />
+      <AppHeader />
       <main class="main-content">
-        <router-view />
+        <router-view name="main" />
       </main>
     </div>
 
-    <!-- User overlay (e.g., dropdown or modal) -->
-    <div v-if="userOverlayOpen" class="user-overlay" @click.self="toggleUserOverlay(false)">
-      <div class="user-overlay-content">
-        <!-- Future user overlay content -->
-        <p>User: {{ userName }}</p>
-        <button @click="toggleUserOverlay(false)">Close</button>
-      </div>
-    </div>
+    <!-- Universal hModal: conditionally shows login/signUp/forgotPassword -->
+    <UniversalModal :isMobile="isMobile">
+      <router-view name="modal" />
+    </UniversalModal>
   </div>
 </template>
 
@@ -66,75 +27,41 @@
 import { ref, onBeforeUnmount } from 'vue';
 import AppHeader from './components/layout/AppHeader.vue';
 import AppSidebar from './components/layout/AppSidebar.vue';
-import AuthStatus from './components/shared/AuthStatus.vue';
-import BaseButton from './components/base/BaseButton.vue';
+import UniversalModal from './components/layout/UniversalModal.vue';
 
 export default {
   name: 'App',
-  components: { AppHeader, AppSidebar, AuthStatus, BaseButton },
+  components: { AppHeader, AppSidebar, UniversalModal },
   setup() {
     const sidebarOpen = ref(false);
     const isCollapsed = ref(false);
-    const isLoggedIn = ref(false);
-    const userName = ref(null);
-    const userOverlayOpen = ref(false);
 
+    // Detect mobile
     const isMobile = ref(window.innerWidth <= 600);
-    const handleResize = () => {
+    function handleResize() {
       isMobile.value = window.innerWidth <= 600;
       if (!isMobile.value) {
         sidebarOpen.value = false;
       }
-    };
+    }
     window.addEventListener('resize', handleResize);
     onBeforeUnmount(() => {
       window.removeEventListener('resize', handleResize);
     });
 
-    const toggleSidebar = () => {
-      isCollapsed.value = !isCollapsed.value;
-    };
-
-    const toggleSidebarOpen = () => {
+    function toggleSidebarOpen() {
       sidebarOpen.value = !sidebarOpen.value;
-    };
-
-    const onSignUp = () => {
-      isLoggedIn.value = true;
-      userName.value = "John Doe";
-    };
-
-    const onLogin = () => {
-      isLoggedIn.value = true;
-      userName.value = "John Doe";
-    };
-
-    const onLogout = () => {
-      isLoggedIn.value = false;
-      userName.value = null;
-    };
-
-    const toggleUserOverlay = (force) => {
-      if (typeof force === 'boolean') {
-        userOverlayOpen.value = force;
-      } else {
-        userOverlayOpen.value = !userOverlayOpen.value;
-      }
-    };
+    }
+    function toggleSidebar() {
+      isCollapsed.value = !isCollapsed.value;
+    }
 
     return {
       sidebarOpen,
       isCollapsed,
       isMobile,
-      isLoggedIn,
-      userName,
-      userOverlayOpen,
-      toggleSidebar,
       toggleSidebarOpen,
-      onSignUp,
-      onLogin,
-      onLogout,
-      toggleUserOverlay,
+      toggleSidebar
     };
   },
 };

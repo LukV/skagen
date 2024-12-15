@@ -4,7 +4,7 @@
 :root {
   /* Color Palette */
   --color-primary: #570ce5;
-  --color-primary-lighter: #8254e5;
+  --color-primary-lighter: #6715ff;
   --color-secondary: #d026ab;
   --color-text: #2c3e50;
   --color-text-lighter: #566575;
@@ -12,6 +12,7 @@
   --color-accent: #fea303;
   --color-background: #ffffff;
   --color-background-darker: #fafafa;
+  --color-background-darkest: #f5f5f5;
   --color-link: #2656d0;
   --color-link-lighter: #738bdf;
 
@@ -158,7 +159,6 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
   font-weight: var(--font-weight-bold);
   margin-bottom: var(--spacing-md);
 }
@@ -175,4 +175,9 @@ p {
 .icon-md {
   width: 24px;
   height: 24px;
+}
+
+.icon-lg {
+  width: 28px;
+  height: 28px;
 }

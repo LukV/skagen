@@ -44,7 +44,6 @@
       <BaseInput placeholder="Enter your name" label="Name" v-model="formData.name" :required="true" />
 
       <!-- Icon in front -->
-      <!-- Icon in front -->
       <BaseInput
         placeholder="Type your query"
         label="Search"

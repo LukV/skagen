@@ -119,7 +119,7 @@ export default {
 .input-field-container {
   position: relative;
   width: 100%;
-  margin-bottom: 20px;
+  margin: 40px 0;
 }
 
 .input-wrapper {
@@ -131,7 +131,7 @@ export default {
 }
 
 .input-wrapper:focus-within {
-  border-color: #6200ee;
+  border-color: var(--color-primary);
 }
 
 .input-wrapper--error {
@@ -151,6 +151,7 @@ export default {
 
 .input-label--floating {
   top: 0;
+  left: 0px;
   transform: translateY(-100%);
   font-size: 0.75rem;
   color: #6200ee;
@@ -194,11 +195,9 @@ export default {
 
 .input-error-message {
   position: absolute;
-  left: 10px;
   color: red;
   font-size: 0.75rem;
   background: #fff; 
-  padding: 1px 4px;
   z-index: 10; 
 }
 </style>

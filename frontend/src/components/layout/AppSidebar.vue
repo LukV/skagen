@@ -3,8 +3,10 @@
     <div class="sidebar-top">
       <div class="sidebar-header">
         <div class="brand">
-          <img v-if="!collapsed" src="@/assets/images/skagen-icon.png" alt="Skågen Icon" class="brand-icon" />
-          <span v-if="!collapsed" class="brand-text mt-xs">Skågen</span>
+          <RouterLink to="/home">
+            <img v-if="!collapsed" src="@/assets/images/skagen-icon.png" alt="Skågen Icon" class="brand-icon" />
+            <span v-if="!collapsed" class="brand-text mt-xs">Skågen</span>
+          </RouterLink>
         </div>
         <BaseButton v-if="!collapsed" variant="text" @click="$emit('toggle-collapse')" class="mt-sm">
           <ChevronDoubleLeftIcon class="chevron-icon icon-sm" />
@@ -64,7 +66,6 @@ export default {
   transition: width 0.3s ease;
   width: 200px;
   background: var(--color-background-darker, #fff);
-  border-right: 1px solid #ddd;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -95,9 +96,11 @@ export default {
   justify-content: space-between;
 }
 
-.brand {
+.brand a {
   display: flex;
-  align-items: center;
+  align-items: center; /* Vertically center the content */
+  text-decoration: none;
+  color: inherit; /* Optional: inherit text color */
 }
 
 .brand-icon {
