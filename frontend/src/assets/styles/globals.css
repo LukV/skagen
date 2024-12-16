@@ -5,9 +5,11 @@
   /* Color Palette */
   --color-primary: #570ce5;
   --color-primary-lighter: #6715ff;
+  --color-primary-lightest: #f0e9ff;
   --color-secondary: #d026ab;
   --color-text: #2c3e50;
   --color-text-lighter: #566575;
+  --color-text-lightest: #999;
   --color-text-light: #ffffff;
   --color-accent: #fea303;
   --color-background: #ffffff;
@@ -161,10 +163,21 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-weight: var(--font-weight-bold);
   margin-bottom: var(--spacing-md);
+  line-height: 1.1;
 }
 
 p {
   margin-bottom: var(--spacing-md);
+}
+
+textarea {
+  font-family: var(--font-base);
+}
+
+
+.icon-xs {
+  width: 12px;
+  height: 12px;
 }
 
 .icon-sm {
@@ -180,4 +193,9 @@ p {
 .icon-lg {
   width: 28px;
   height: 28px;
+}
+
+.icon-xs, .icon-sm, .icon-md, .icon-lg {
+  flex-shrink: 0;
+  flex-grow: 0;
 }

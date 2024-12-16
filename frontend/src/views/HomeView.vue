@@ -77,13 +77,14 @@ export default {
     padding: 1rem;
     text-align: center;
     font-family: Inter, sans-serif;
-    color: #333;
+    height: 80vh;
 }
 
 h1 {
     font-family: var(--font-heading, sans-serif) !important;
-    font-weight: var(--font-weight-bold, 500);
+    font-weight: var(--font-weight-bold, 600);
     font-size: 2.5rem;
+    margin-bottom: var(--spacing-lg) !important;
 }
 
 /* Input Section */
@@ -161,5 +162,12 @@ blockquote span {
     display: block;
     margin-top: 0.5rem;
     font-weight: 600;
+}
+
+/* On mobile hide sidebar by default */
+@media (max-width: 600px) {
+    .home-page {
+        height: 100vh;
+    }
 }
 </style>
