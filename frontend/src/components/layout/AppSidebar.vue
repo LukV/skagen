@@ -15,7 +15,7 @@
           <ChevronDoubleRightIcon class="icon-md" />
         </BaseButton>
       </div>
-      <div class="brand-baseline" v-if="!collapsed">Thought validation</div>
+      <div class="brand-baseline" v-if="!collapsed">Thought Validation</div>
     </div>
 
     <div class="sidebar-content">

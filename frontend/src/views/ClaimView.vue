@@ -3,8 +3,10 @@
     <section class="claim-title">
       <div class="claim-label">CLAIM</div>
       <h1 class="claim-heading">
-        Social media increase polarization
-        <span class="claim-time"><ClockIcon class="icon-xs"/> 16h</span>
+        {{claim}}
+        <span class="claim-time">
+          <ClockIcon class="icon-xs" /> 16h
+        </span>
       </h1>
     </section>
 
@@ -46,7 +48,7 @@
     <section class="conversation">
       <!-- user balloon aligned right -->
       <div class="user-text-balloon">
-        Social media increase polarization
+        {{claim}}
       </div>
       <!-- AI balloon aligned left -->
       <div class="ai-text-balloon">
@@ -67,7 +69,7 @@
     <!-- Block 5: Follow-up (sticky footer) -->
     <section class="follow-up">
       <div class="input-container">
-      <textarea placeholder="Ask follow-up..." rows="3"></textarea>
+        <textarea placeholder="Ask follow-up..." rows="3"></textarea>
         <button>
           <span>&#8594;</span>
         </button>
@@ -79,17 +81,21 @@
 <script>
 import BaseCard from '@/components/base/BaseCard.vue';
 import { ClockIcon } from '@heroicons/vue/24/solid';
-
+import { mapState } from 'vuex';
 
 export default {
   name: 'ClaimView',
-  components: { BaseCard, ClockIcon }
+  components: { BaseCard, ClockIcon },
+  computed: {
+    ...mapState({
+      claim: (state) => state.claim, 
+    }),
+  },
 };
 </script>
 
 <style scoped>
 .claim-view {
-  /* Container max width, centered */
   max-width: 750px;
   margin: 0 auto;
   padding: var(--spacing-md);

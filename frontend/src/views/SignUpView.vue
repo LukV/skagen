@@ -1,52 +1,47 @@
 <template>
   <div class="sign-up-view mx-xl my-md">
     <h2 style="margin-bottom: -10px; text-align: center;">Sign Up</h2>
-    <form @submit.prevent="handleSignUp">
-      <!-- Name -->
-      <BaseInput label="Name" placeholder="Enter your name" v-model="name" :required="true" />
-
-      <!-- E-mail -->
-      <BaseInput label="E-mail" placeholder="Enter your e-mail address" v-model="email" :required="true" />
-
-      <!-- Password -->
-      <BaseInput label="Password" type="password" placeholder="Enter your password" v-model="password"
-        :required="true" />
-
-      <!-- Avatar Selection -->
+    <form @submit.prevent="signUp">
+      <BaseInput 
+        label="Name" 
+        placeholder="Enter your name" 
+        v-model="username" 
+        :errorMessage="errors.username"
+        @validate="validateFieldHandler('username')"
+      />
+      <BaseInput 
+        label="E-mail" 
+        placeholder="Enter your e-mail address" 
+        v-model="email" 
+        :errorMessage="errors.email"
+        @validate="validateFieldHandler('email')"
+      />
+      <BaseInput 
+        label="Password" 
+        type="password" 
+        placeholder="Enter your password" 
+        v-model="password" 
+        :errorMessage="errors.password"
+        @validate="validateFieldHandler('password')"
+      />
       <div class="avatar-selection-container">
         <p>Select your avatar:</p>
         <div class="avatar-grid">
-          <!-- Existing avatar loop -->
-          <div v-for="avatarIndex in 10" :key="avatarIndex" class="avatar-item"
-            :class="{ selected: selectedAvatar === avatarIndex }" @click="selectedAvatar = avatarIndex">
+          <div v-for="avatarIndex in 10" :key="avatarIndex" class="avatar-item">
             <img :src="require(`@/assets/images/avatar-${avatarIndex}.png`)" :alt="'Avatar ' + avatarIndex" />
           </div>
-
           <!-- Plus icon item at the end -->
-          <button
-            class="avatar-item add-avatar mt-sm"
-            @click="onPlusClick"
-            aria-label="Add new avatar"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              width="24"
-              height="24"
-              fill="white"
-            >
-              <path
-                fill-rule="evenodd"
+          <button class="avatar-item add-avatar mt-sm" @click="onPlusClick" aria-label="Add new avatar">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="white">
+              <path fill-rule="evenodd"
                 d="M12 4.75a.75.75 0 01.75.75v5h5a.75.75 0 110 1.5h-5v5a.75.75 0 01-1.5 0v-5h-5a.75.75 0 110-1.5h5v-5A.75.75 0 0112 4.75z"
-                clip-rule="evenodd"
-              />
+                clip-rule="evenodd" />
             </svg>
           </button>
         </div>
       </div>
-
       <div class="button-container mt-sm">
-        <BaseButton variant="primary" class="px-xl py-md mt-md" style="width:200px;">
+        <BaseButton variant="primary" class="px-xl py-md mt-md" style="width:200px;" :disabled="!isFormValid">
           Sign Up
         </BaseButton>
       </div>
@@ -76,10 +71,11 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import { useStore } from 'vuex';
+import { mapActions } from 'vuex';
+import apiClient from '@/utils/apiClient';
 import BaseInput from '@/components/base/BaseInput.vue';
 import BaseButton from '@/components/base/BaseButton.vue';
+import { validateEmail, validatePassword, validateRequired, validateField } from '@/utils/validators';
 
 export default {
   name: 'SignUpView',
@@ -87,38 +83,66 @@ export default {
     BaseInput,
     BaseButton
   },
-  setup() {
-    const store = useStore();
-    const name = ref('');
-    const email = ref('');
-    const password = ref('');
-    const confirmPassword = ref('');
-    const selectedAvatar = ref(null);
-
-    function handleSignUp() {
-      // Simple validation
-      if (password.value !== confirmPassword.value) {
-        alert('Passwords do not match.');
-        return;
-      }
-
-      // Dispatch signup with relevant data
-      store.dispatch('signup', {
-        name: name.value,
-        email: email.value,
-        password: password.value,
-        avatar: selectedAvatar.value
-      });
-    }
-
+  data() {
     return {
-      name,
-      email,
-      password,
-      confirmPassword,
-      selectedAvatar,
-      handleSignUp
+      email: '',
+      username: '',
+      password: '',
+      errors: {
+        username: '',
+        email: '',
+        password: '',
+      },
     };
+  },
+  computed: {
+    isFormValid() {
+      return (
+        !this.errors.username &&
+        !this.errors.email &&
+        !this.errors.password &&
+        this.username &&
+        this.email &&
+        this.password
+      );
+    },
+  },
+  methods: {
+    ...mapActions(['login', 'addNotification']),
+    validateFieldHandler(field) {
+      if (field === 'username') {
+        this.errors.username = validateField(this.username, [validateRequired]);
+      }
+      if (field === 'email') {
+        this.errors.email = validateField(this.email, [validateRequired, validateEmail]);
+      }
+      if (field === 'password') {
+        this.errors.password = validateField(this.password, [validateRequired, validatePassword]);
+      }
+    },
+    async signUp() {
+      try {
+        // Create a new user in the backend
+        await apiClient.post('/users/', {
+          email: this.email,
+          username: this.username,
+          password: this.password,
+        });
+
+        // Log the user in via Vuex action
+        await this.login({
+          username: this.username,
+          password: this.password,
+        });
+
+        // Emit success event to close overlay
+        this.addNotification({ message: `Registration succesful. Welcome ${this.username}.`, type: 'info' });
+        this.$emit('auth-success');
+      } catch (error) {
+        console.error(error);
+        this.addNotification({ message: error.response?.data?.detail[0]?.msg|| 'Registration failed. Please try again.', type: 'error' });
+      }
+    },
   }
 };
 </script>
@@ -162,8 +186,8 @@ export default {
 
 /* Style for the "+" button */
 .add-avatar {
-  background-color: var(--color-primary, #007bff); 
-  border: 8px solid var(--color-primary-lighter, #007bff); 
+  background-color: var(--color-primary, #007bff);
+  border: 8px solid var(--color-primary-lighter, #007bff);
   color: white;
   cursor: pointer;
   transition: background-color 0.3s;
@@ -177,11 +201,13 @@ export default {
 }
 
 .add-avatar:hover {
-  background-color: var(--primary-color-hover, #0056b3); /* Darker primary for hover */
+  background-color: var(--primary-color-hover, #0056b3);
+  /* Darker primary for hover */
 }
 
 .add-avatar:focus {
-  outline: 2px solid var(--primary-color, #007bff); /* Accessible focus style */
+  outline: 2px solid var(--primary-color, #007bff);
+  /* Accessible focus style */
   outline-offset: 2px;
 }
 

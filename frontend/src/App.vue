@@ -1,4 +1,6 @@
 <template>
+  <NotificationBar v-if="notifications.length" :notifications="notifications" @dismiss="clearNotification" />
+
   <div class="app-container">
     <transition name="slide-sidebar">
       <AppSidebar
@@ -25,13 +27,25 @@
 
 <script>
 import { ref, onBeforeUnmount } from 'vue';
-import AppHeader from './components/layout/AppHeader.vue';
-import AppSidebar from './components/layout/AppSidebar.vue';
-import UniversalModal from './components/layout/UniversalModal.vue';
+import { mapState, mapMutations } from 'vuex';
+import AppHeader from '@/components/layout/AppHeader';
+import AppSidebar from '@/components/layout/AppSidebar';
+import UniversalModal from '@/components/layout/UniversalModal';
+import NotificationBar from "@/components/layout/NotificationBar";
+
 
 export default {
   name: 'App',
-  components: { AppHeader, AppSidebar, UniversalModal },
+  components: { AppHeader, AppSidebar, UniversalModal, NotificationBar },
+  computed: {
+    ...mapState(['authStatus', 'notifications']),
+  },
+  methods: {
+    ...mapMutations(["ADD_NOTIFICATION", "REMOVE_NOTIFICATION"]),
+    clearNotification(notificationId) {
+      this.REMOVE_NOTIFICATION(notificationId);
+    },
+  },
   setup() {
     const sidebarOpen = ref(false);
     const isCollapsed = ref(false);

@@ -56,17 +56,14 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/solid';
 
 export default {
   name: 'BaseInput',
-  components: {
-    EyeIcon,
-    EyeSlashIcon
-  },
+  components: { EyeIcon, EyeSlashIcon },
   props: {
     type: { type: String, default: 'text' },
     label: { type: String, default: '' },
     placeholder: { type: String, default: '' },
     disabled: { type: Boolean, default: false },
     modelValue: { type: String, default: '' },
-    required: { type: Boolean, default: false },
+    errorMessage: { type: String, default: '' }, // Always a string
   },
   data() {
     return {
@@ -74,12 +71,12 @@ export default {
       showPassword: false,
       inputId: 'input-' + Math.random().toString(36).substring(2, 9),
       errorId: 'error-' + Math.random().toString(36).substring(2, 9),
-      errorMessage: '',
+      localErrorMessage: this.errorMessage, // Local error state
     };
   },
   computed: {
     hasError() {
-      return this.errorMessage !== '';
+      return this.errorMessage && this.errorMessage.length > 0;
     },
     isFloating() {
       return this.isFocused || (this.modelValue && this.modelValue.trim() !== '');
@@ -97,19 +94,19 @@ export default {
     },
     onBlur() {
       this.isFocused = false;
-      if (this.required && !this.modelValue) {
-        this.errorMessage = 'This field is required.';
-      } else {
-        this.errorMessage = '';
-      }
+      this.$emit('validate'); // Emit a validation trigger to the parent
     },
     togglePassword() {
-      if (this.type === 'password') {
-        this.showPassword = !this.showPassword;
-      }
+      if (this.type === 'password') this.showPassword = !this.showPassword;
     },
     updateValue(event) {
       this.$emit('update:modelValue', event.target.value);
+      this.$emit('validate'); // Trigger validation on input
+    },
+  },
+  watch: {
+    errorMessage(newVal) {
+      this.localErrorMessage = newVal; // Sync parent prop changes
     },
   },
 };
