@@ -1,7 +1,6 @@
 <template>
-  <NotificationBar v-if="notifications.length" :notifications="notifications" @dismiss="clearNotification" />
-
   <div class="app-container">
+    <NotificationBar v-if="notifications.length" :notifications="notifications" @dismiss="clearNotification" />
     <transition name="slide-sidebar">
       <AppSidebar
         v-if="!isMobile || sidebarOpen"

@@ -21,7 +21,8 @@ def login(
             detail="Invalid credentials."
         )
 
-    user = crud_users.get_user_by_email(db, login_data.username)
+    user = crud_users.get_user_by_email(db, login_data.username) \
+        or crud_users.get_user_by_username(db, login_data.username)
 
     if not user or not auth.verify_password(login_data.password, user.password):
         raise HTTPException(

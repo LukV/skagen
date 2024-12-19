@@ -171,3 +171,9 @@ def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
     Fetches a user by their email.
     """
     return db.query(models.User).filter(models.User.email == email).first()
+
+def get_user_by_username(db: Session, username: str) -> Optional[models.User]:
+    """
+    Fetches a user by their username.
+    """
+    return db.query(models.User).filter(models.User.username == username).first()

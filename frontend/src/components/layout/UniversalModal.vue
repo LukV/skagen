@@ -17,7 +17,7 @@
           </div>
   
           <!-- Actual auth content (SignUpView, LoginView, etc.) goes here -->
-          <slot />
+          <slot @close-modal="closeModal" />
         </div>
       </div>
     </div>
@@ -43,12 +43,14 @@
           const route = useRoute();
           const router = useRouter();
   
-          // Computed property controlling modal visibility based on route meta
           const showModal = computed(() => route.meta.universalModal);
   
-          // Closes the modal by navigating to a target route (e.g. 'home').
           function closeModal() {
+            if (window.history.length > 1) {
+              router.back();
+            } else {
               router.push({ name: 'home' });
+            }
           }
   
           // Close modal on ESC keypress
@@ -113,17 +115,13 @@
     height: 40px;
   }
   
-  /* 
-     Desktop style (min-width: 600px).
-     If you need "exact" media query, use (min-width: 600px) or 640px depending on design. 
-  */
   @media (min-width: 600px) {
     .modal-inner {
       max-width: 600px;
-      margin: 2rem auto;             /* horizontally center + vertical spacing */
-      background: #fafafa;         /* subtle gray background */
-      padding: 2rem;                 /* padding inside the container */
-      border-radius: 4px;            /* slight corner rounding if desired */
+      margin: 2rem auto;
+      background: #fafafa;
+      padding: 2rem;
+      border-radius: 4px;
     }
   }
   </style>

@@ -122,22 +122,24 @@ export default {
     },
     async signUp() {
       try {
-        // Create a new user in the backend
         await apiClient.post('/users/', {
           email: this.email,
           username: this.username,
           password: this.password,
         });
 
-        // Log the user in via Vuex action
         await this.login({
           username: this.username,
           password: this.password,
         });
 
-        // Emit success event to close overlay
         this.addNotification({ message: `Registration succesful. Welcome ${this.username}.`, type: 'info' });
-        this.$emit('auth-success');
+
+        if (window.history.length > 1) {
+          this.$router.back();
+        } else {
+          this.$router.push({ name: 'home' });
+        }
       } catch (error) {
         console.error(error);
         this.addNotification({ message: error.response?.data?.detail[0]?.msg|| 'Registration failed. Please try again.', type: 'error' });
