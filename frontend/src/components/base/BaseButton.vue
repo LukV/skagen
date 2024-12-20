@@ -79,6 +79,22 @@
     background-color: rgba(103, 80, 164, 0.2);
     transform: scale(0.98);
   }
+
+  /* Secondary variant */
+  .base-button--danger {
+    background-color: var(--color-background, #fff);
+    color: var(--color-alert);
+    border: 1px solid var(--color-alert);
+  }
+  
+  .base-button--danger:hover {
+    background-color: rgba(103, 80, 164, 0.1);
+  }
+  
+  .base-button--danger:active {
+    background-color: rgba(103, 80, 164, 0.2);
+    transform: scale(0.98);
+  }
   
   /* Icon-only buttons */
   .base-button--icon-only {

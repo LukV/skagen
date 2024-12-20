@@ -85,10 +85,7 @@
     bottom: 0;
     background: var(--color-background-darkest, #fafafa);
     z-index: 2000;
-  
-    /* Let the full overlay scroll if content is taller than viewport */
     overflow-y: auto;
-  
     display: flex;
     flex-direction: column;
   }
@@ -96,7 +93,6 @@
   .modal-header {
     position: sticky;
     top: 0;
-    background: var(--color-background-darkest, #fafafa);
     padding: 0.5rem 1rem;
     text-align: right;
     z-index: 10;

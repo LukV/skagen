@@ -6,6 +6,7 @@ import SignUpView from '@/views/SignUpView.vue';
 import ForgotPasswordView from '@/views/ForgotPasswordView.vue';
 import MobileMenu from '@/views/MobileMenu.vue';
 import ClaimView from '@/views/ClaimView.vue';
+import AccountView from '@/views/AccountView.vue';
 
 const routes = [
   {
@@ -62,6 +63,14 @@ const routes = [
     name: 'forgotPassword',
     components: {
       modal: ForgotPasswordView
+    },
+    meta: { universalModal: true }
+  },
+  {
+    path: '/account',
+    name: 'account',
+    components: {
+      modal: AccountView
     },
     meta: { universalModal: true }
   },

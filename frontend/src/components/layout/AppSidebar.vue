@@ -134,9 +134,10 @@ export default {
 }
 
 .sidebar-bottom {
+  border-top: 1px solid #ddd;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
 }
 </style>
