@@ -4,7 +4,7 @@
       <!-- Sticky Header with Close Button -->
       <header class="modal-header">
         <BaseButton variant="text" @click="closeModal">
-          <XMarkIcon class="chevron-icon icon-lg" />
+          <XMarkIcon class="icon-lg" />
         </BaseButton>
       </header>
   

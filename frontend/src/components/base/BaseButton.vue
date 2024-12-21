@@ -80,7 +80,7 @@
     transform: scale(0.98);
   }
 
-  /* Secondary variant */
+  /* Danger variant */
   .base-button--danger {
     background-color: var(--color-background, #fff);
     color: var(--color-alert);
@@ -95,7 +95,22 @@
     background-color: rgba(103, 80, 164, 0.2);
     transform: scale(0.98);
   }
+
+  /* Link variant */
+  .base-button--link {
+    background-color: transparent;
+    border: 0;
+    text-decoration: underline;
+  }
   
+  .base-button--link:hover {
+    color: rgba(103, 80, 164, 0.1);
+  }
+  
+  .base-button--link:active {
+    color: rgba(103, 80, 164, 0.2);
+  }
+
   /* Icon-only buttons */
   .base-button--icon-only {
     padding: 0;

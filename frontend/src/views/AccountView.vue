@@ -2,15 +2,17 @@
     <div class="account-view">
         <h2 class="title">Account Settings</h2>
         <div class="profile-section">
-            <img class="avatar" :src="userAvatar" alt="User Avatar" />
+            <img class="avatar" src="@/assets/images/avatar-1.png" alt="User Avatar" />
             <div class="profile-details">
                 <p class="username">{{ user.username }}</p>
-                <a class="logout-link" @click.prevent="logout">Logout</a>
+                <BaseButton variant="link" @click.prevent="goLogout">
+                    Logout <ChevronRightIcon class="icon-xs" />
+                </BaseButton>
             </div>
         </div>
         <div class="membership-info">
             <p><strong>Member since</strong></p>
-            <p>{{ formattedJoinDate }}</p>
+            <p>{{formattedJoinDate}}</p>
         </div>
         <div class="account-edit">
             <BaseTabs :tabs="tabs" v-model="activeTab">
@@ -19,7 +21,7 @@
                 <div v-if="activeTab === 'edit-profile'">
                     <div class="edit-section">
                         <div class="edit-photo-section">
-                            <img class="avatar-edit" :src="userAvatar" alt="Current Avatar" />
+                            <img class="avatar-edit" src="" alt="Current Avatar" />
                             <BaseButton variant="secondary" class="ml-md px-md py-sm" @click="changeAvatar">Change Avatar</BaseButton>
                         </div>
                     </div>
@@ -59,13 +61,16 @@
 import BaseInput from '@/components/base/BaseInput.vue';
 import BaseButton from '@/components/base/BaseButton.vue';
 import BaseTabs from '@/components/base/BaseTabs.vue';
+import { ChevronRightIcon } from '@heroicons/vue/24/solid';
+import { mapState, mapActions } from 'vuex';
 
 export default {
     name: 'AccountView',
     components: {
         BaseInput,
         BaseButton,
-        BaseTabs
+        BaseTabs, 
+        ChevronRightIcon
     },
     data() {
         return {
@@ -74,13 +79,6 @@ export default {
                 { label: 'Edit Profile', value: 'edit-profile' },
                 { label: 'Password', value: 'password' }
             ],
-            // Mock user data - in a real app, this would come from a store or API
-            user: {
-                username: 'John Doe',
-                email: 'john.doe@example.com',
-                avatarIndex: 1,
-                joinDate: '2024-11-24'
-            },
             editableUsername: '',
             editableEmail: '',
             currentPassword: '',
@@ -89,19 +87,26 @@ export default {
         };
     },
     computed: {
+        ...mapState(['user']),
         userAvatar() {
             // Just an example: requires avatar images at certain paths
             return require(`@/assets/images/avatar-${this.user.avatarIndex}.png`);
         },
         formattedJoinDate() {
-            const date = new Date(this.user.joinDate);
+            const date = new Date(this.user.date_created);
             return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
         }
     },
     methods: {
-        logout() {
-            // Implement logout logic
-            console.log("Logged out");
+        ...mapActions(['logout']),
+        goLogout() {
+            this.logout();
+
+            if (window.history.length > 1) {
+                this.$router.back();
+            } else {
+                this.$router.push({ name: 'home' });
+            }
         },
         changeAvatar() {
             // Implement avatar change logic
@@ -201,6 +206,11 @@ export default {
     height: 80px;
     border-radius: 50%;
     object-fit: cover;
+}
+
+.icon {
+    border: 0 !important;
+    background: none !important;
 }
 
 /* On mobile hide sidebar by default */
