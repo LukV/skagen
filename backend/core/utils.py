@@ -1,11 +1,15 @@
-from pathlib import Path
+from fastapi import Path as FastAPIPath
+from pathlib import Path as PathLibPath
+from typing import Callable
 import ulid
 import requests
 from fastapi import Depends, HTTPException
 from core.auth import get_current_user
+from sqlalchemy.orm import Session
 from db import models
+from db.database import get_db
 
-path = Path(__file__).resolve().parent.parent
+path = PathLibPath(__file__).resolve().parent.parent
 
 def is_admin(
     current_user: models.User = Depends(get_current_user)
@@ -15,15 +19,35 @@ def is_admin(
         raise HTTPException(status_code=403, detail="Admin privileges required")
     return current_user
 
-def is_admin_or_owner(
-    user_id: str,
-    current_user: models.User = Depends(get_current_user)
+def is_admin_or_entity_owner(
+    entity_getter: Callable[[Session, str], models.Base],
+    entity_name: str = "Entity",
+    ownership_field: str = "user_id",
+    entity_id_param: str = "entity_id",  # name of the parameter in the path
 ):
-    """Evaluates if the logged in user had rights to the involved object or method."""
-    if current_user.role == 'admin' or current_user.id == user_id:
+    """
+    Returns a dependency that verifies if the current user is admin or
+    the owner of the entity identified by `entity_id_param`.
+    """
+
+    async def dependency(
+        entity_id: str = FastAPIPath(..., alias=entity_id_param),
+        db: Session = Depends(get_db),
+        current_user: models.User = Depends(get_current_user),
+    ):
+        if current_user.role == "admin":
+            return current_user
+
+        entity = entity_getter(db, entity_id)
+        if not entity:
+            raise HTTPException(status_code=404, detail=f"{entity_name} not found.")
+
+        if getattr(entity, ownership_field) != current_user.id:
+            raise HTTPException(status_code=403, detail="Operation not permitted.")
+
         return current_user
 
-    raise HTTPException(status_code=403, detail="Operation not permitted")
+    return dependency
 
 def generate_id(prefix: str) -> str:
     """
