@@ -11,4 +11,4 @@ async def log_feedback(user_feedback):
         None
     """
     # Placeholder for feedback logging implementation
-    pass
+    return user_feedback

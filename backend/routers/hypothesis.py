@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Depends, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from crud import hypothesises as crud_hypothesises
 from schemas import hypothesises as hypothesis_schemas
@@ -31,7 +31,8 @@ def get_all_hypothesises(
 ):
     """Retrieve a list of all hypotheses, or only the user's hypotheses if not an admin."""
     hypothesises = crud_hypothesises.get_all_hypothesises(db, current_user)
-    return [hypothesis_schemas.HypothesisResponse(**hypothesis.__dict__) for hypothesis in hypothesises]
+    return [hypothesis_schemas.HypothesisResponse(**hypothesis.__dict__) \
+             for hypothesis in hypothesises]
 
 @router.get("/{hypothesis_id}", response_model=hypothesis_schemas.HypothesisResponse)
 def get_hypothesis(
@@ -51,13 +52,13 @@ def update_hypothesis(
     hypothesis_update: hypothesis_schemas.HypothesisUpdate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(
+    _current_user: models.User = Depends(
         is_admin_or_entity_owner(
             crud_hypothesises.get_hypothesis_by_id,
             entity_name="Hypothesis",
             entity_id_param="hypothesis_id",
         )
-    ) # pylint: disable=W0613
+    )
 ):
     """Update an existing hypothesis's details."""
     updated_hypothesis, is_content_updated = crud_hypothesises.update_hypothesis(
@@ -74,13 +75,13 @@ def update_hypothesis(
 def delete_hypothesis(
     hypothesis_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(
+    _current_user: models.User = Depends(
         is_admin_or_entity_owner(
             crud_hypothesises.get_hypothesis_by_id,
             entity_name="Hypothesis",
             entity_id_param="hypothesis_id",
         )
-    ) # pylint: disable=W0613
+    )
 ):
     """Delete an existing hypothesis from the database. This is a hard delete."""
     crud_hypothesises.delete_hypothesis(db, hypothesis_id)

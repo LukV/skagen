@@ -62,14 +62,14 @@ def update_user(
     user_id: str,
     user_update: user_schemas.UserUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(
+    _current_user: models.User = Depends(
         is_admin_or_entity_owner(
             crud_users.get_user_by_id,
             entity_name="Hypothesis",
             ownership_field="id",
             entity_id_param="hypothesis_id",
         )
-    ) # pylint: disable=W0613
+    )
 
 ):
     """Update an existing user's details."""

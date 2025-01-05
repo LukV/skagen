@@ -1,6 +1,6 @@
+import json
 from dotenv import load_dotenv
 from openai import OpenAI
-import json
 
 # Load variables from .env into os.environ
 load_dotenv()
@@ -63,7 +63,7 @@ async def extract_topic_terms(text: str) -> dict:
     )
 
     content = response.choices[0].message.content
-    
+
     try:
         parsed = json.loads(content) # type: ignore
     except json.JSONDecodeError:

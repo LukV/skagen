@@ -35,10 +35,11 @@ def update_hypothesis(
     """
     Updates an existing hypothesis's details in the database.
     """
-    db_hypothesis = db.query(models.Hypothesis).filter(models.Hypothesis.id == hypothesis_id).first()
+    db_hypothesis = db.query(models.Hypothesis) \
+        .filter(models.Hypothesis.id == hypothesis_id).first()
     if not db_hypothesis:
         raise HTTPException(status_code=404, detail="Hypothesis not found.")
-    
+
     is_content_updated = bool(
         hypothesis_update.content and hypothesis_update.content != db_hypothesis.content
     )
@@ -63,7 +64,8 @@ def delete_hypothesis(db: Session, hypothesis_id: str) -> Optional[models.Hypoth
     Returns:
         hypothesis or None: The deleted hypothesis instance or None if not found.
     """
-    db_hypothesis = db.query(models.Hypothesis).filter(models.Hypothesis.id == hypothesis_id).first()
+    db_hypothesis = db.query(models.Hypothesis) \
+        .filter(models.Hypothesis.id == hypothesis_id).first()
     if db_hypothesis:
         db.delete(db_hypothesis)
         db.commit()
@@ -78,8 +80,9 @@ def get_all_hypothesises(db: Session, current_user: models.User) -> List[models.
     """
     if current_user.role == 'admin':   # type: ignore # pylint: disable=E1136
         return db.query(models.Hypothesis).all()
-    else:
-        return db.query(models.Hypothesis).filter(models.Hypothesis.user_id == current_user.id).all()
+
+    return db.query(models.Hypothesis) \
+        .filter(models.Hypothesis.user_id == current_user.id).all()
 
 def get_hypothesis_by_id(db: Session, hypothesis_id: str) -> Optional[models.Hypothesis]:
     """

@@ -12,4 +12,4 @@ async def summarize_results(search_results):
     """
     # Placeholder for summarization logic
     # Integrate with a summarization model (e.g., GPT-4, T5)
-    return "This is a sample summary of the findings."
+    return search_results

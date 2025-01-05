@@ -1,12 +1,11 @@
 import os
-import httpx
-from typing import List, Dict
-from dotenv import load_dotenv
 import urllib.parse
-from backend.db.models import Hypothesis
 import time
 from datetime import datetime, timezone
+import httpx
 import dateutil.parser
+from dotenv import load_dotenv
+from backend.db.models import Hypothesis
 
 load_dotenv()
 
@@ -20,22 +19,23 @@ async def build_search_query(
     Generates a search-engine-style query string from extracted NLU data.
     Optionally, you can integrate an LLM here to refine or expand with synonyms.
     """
-    
+
     # Combine all extracted items (filter out duplicates)
-    tokens = list(set(hypothesis.extracted_topics + 
-            hypothesis.extracted_terms + 
+    tokens = list(set(hypothesis.extracted_topics +
+            hypothesis.extracted_terms +
             hypothesis.extracted_entities)) # type: ignore
-    
+
     # Example approach: join tokens with " AND " for a more precise query
     # You can tweak logic or use an LLM to add synonyms / synonyms list
     query = " AND ".join(tokens)
-    
+
     # Optionally limit length
     if len(query) > max_length:
         query = query[:max_length]
-    
+
     # CORE queries often benefit from ensuring a field with an abstract/description
-    # We might add 'and _exists_:description' or 'AND _exists_:description' to focus on papers with abstracts
+    # We might add 'and _exists_:description' or 'AND _exists_:description'
+    # to focus on papers with abstracts
     query += " AND _exists_:description"
 
     # URL-encode the query to be safe for GET params
@@ -64,7 +64,7 @@ async def fetch_core_results(
     """
     headers = {"Authorization": f"Bearer {CORE_API_KEY}"}
     url = f"{base_url}?q={query}&limit={limit}"
-    
+
     if scroll:
         url += "&scroll=true"
     if scroll_id:
@@ -73,7 +73,7 @@ async def fetch_core_results(
     async with httpx.AsyncClient() as client:
         while True:
             response = await client.get(url, headers=headers)
-            
+
             # Handle rate limit (429) with X-RateLimit-Retry-After
             if response.status_code == 429:
                 retry_after_str = response.headers.get('X-RateLimit-Retry-After')
@@ -90,12 +90,12 @@ async def fetch_core_results(
                     continue
             elif response.status_code >= 500:
                 response.raise_for_status()
-            
+
             data = response.json()
             return data
 
 async def search_core(
-        hypothesis: Hypothesis, 
+        hypothesis: Hypothesis,
         overall_limit: int = 5) -> list[dict]:
     """
     High-level function to query the CORE API for academic papers.
@@ -114,7 +114,11 @@ async def search_core(
     encoded_query = await build_search_query(hypothesis)
 
     # 2. Fetch initial batch
-    response_data = await fetch_core_results(base_url, encoded_query, limit=overall_limit, scroll=False)
+    response_data = await fetch_core_results(
+        base_url,
+        encoded_query,
+        limit=overall_limit,
+        scroll=False)
 
     if "results" not in response_data:
         return []
@@ -124,7 +128,9 @@ async def search_core(
     # If you want scrolling to get more pages, set scroll=True and handle the logic:
     # scroll_id = response_data.get("scrollId")
     # while scroll_id and len(results_list) < overall_limit:
-    #     next_data = await fetch_core_results(base_url, encoded_query, limit=overall_limit, scroll=True, scroll_id=scroll_id)
+    #     next_data = await fetch_core_results(
+    #           base_url, encoded_query,
+    #           limit=overall_limit, scroll=True, scroll_id=scroll_id)
     #     scroll_id = next_data.get("scrollId")
     #     more_results = next_data.get("results", [])
     #     results_list.extend(more_results)
@@ -137,7 +143,7 @@ async def search_core(
         title = item.get("title")
         if not title or title in used_titles:
             continue
-        
+
         parsed_results.append({
             "id": item.get("id"),
             "title": title,
