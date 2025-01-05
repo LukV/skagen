@@ -49,8 +49,11 @@ async def perform_academic_search(hypothesis: Hypothesis) -> List[Dict]:
     # Run all searches concurrently
     results = await asyncio.gather(*search_tasks)
 
-    # Flatten and deduplicate results
-    combined_results = [item for sublist in results for item in sublist]
-    unique_results = {item["title"]: item for item in combined_results}.values()
+    print(results)
+    return results
 
-    return list(unique_results)
+    # # Flatten and deduplicate results
+    # combined_results = [item for sublist in results for item in sublist]
+    # unique_results = {item["title"]: item for item in combined_results}.values()
+
+    # return list(unique_results)

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import httpx
 import dateutil.parser
 from dotenv import load_dotenv
-from backend.db.models import Hypothesis
+from db.models import Hypothesis
 
 load_dotenv()
 
@@ -21,9 +21,10 @@ async def build_search_query(
     """
 
     # Combine all extracted items (filter out duplicates)
+    extracted_entities = hypothesis.extracted_entities or []
     tokens = list(set(hypothesis.extracted_topics +
             hypothesis.extracted_terms +
-            hypothesis.extracted_entities)) # type: ignore
+            extracted_entities))
 
     # Example approach: join tokens with " AND " for a more precise query
     # You can tweak logic or use an LLM to add synonyms / synonyms list
@@ -70,7 +71,7 @@ async def fetch_core_results(
     if scroll_id:
         url += f"&scrollId={scroll_id}"
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(follow_redirects=True) as client:
         while True:
             response = await client.get(url, headers=headers)
 
