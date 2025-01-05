@@ -15,12 +15,12 @@ def is_admin(
     current_user: models.User = Depends(get_current_user)
 ):
     """Evaluates if the logged in user has role admin."""
-    if current_user.role != 'admin':
+    if current_user.role != 'admin': # type: ignore
         raise HTTPException(status_code=403, detail="Admin privileges required")
     return current_user
 
 def is_admin_or_entity_owner(
-    entity_getter: Callable[[Session, str], models.Base],
+    entity_getter: Callable[[Session, str], models.Base], # type: ignore
     entity_name: str = "Entity",
     ownership_field: str = "user_id",
     entity_id_param: str = "entity_id",  # name of the parameter in the path
@@ -35,7 +35,7 @@ def is_admin_or_entity_owner(
         db: Session = Depends(get_db),
         current_user: models.User = Depends(get_current_user),
     ):
-        if current_user.role == "admin":
+        if current_user.role == "admin": # type: ignore
             return current_user
 
         entity = entity_getter(db, entity_id)
@@ -91,7 +91,7 @@ def download_user_icon(url: str) -> str:
 
 
         icon_filename = f"{generate_id('A')}.{file_extension}"
-        icon_path = Path(path / f"static/icons/{icon_filename}")
+        icon_path = PathLibPath(path / f"static/icons/{icon_filename}")
         icon_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(icon_path, "wb") as icon_file:
@@ -101,4 +101,4 @@ def download_user_icon(url: str) -> str:
         return icon_filename
 
     except requests.RequestException as exc:
-        return exc
+        return str(exc)

@@ -8,7 +8,13 @@ class HypothesisStatus(str, Enum):
     PROCESSING = "Processing"
     COMPLETED = "Completed"
     FAILED = "Failed"
-    
+
+class QueryType(str, Enum):
+    UNKNOWN = "unknown"
+    RESEARCH_BASED = "research-based"
+    FACTUAL = "factual"
+    ABSTRACT = "abstract"
+
 class HypothesisCreate(BaseModel):
     content: str = Field(
         ...,
@@ -27,6 +33,8 @@ class HypothesisUpdate(BaseModel):
     status: Optional[HypothesisStatus] = None
     extracted_topics: Optional[List[str]] = None
     extracted_terms: Optional[List[str]] = None
+    extracted_entities: Optional[List[str]] = None
+    query_type: Optional[QueryType] = None
 
 class HypothesisResponse(BaseModel):
     id: str
@@ -35,6 +43,8 @@ class HypothesisResponse(BaseModel):
     status: HypothesisStatus
     extracted_topics: List[str] = Field(default_factory=list)
     extracted_terms: List[str] = Field(default_factory=list)
+    extracted_entities: List[str] = Field(default_factory=list)
+    query_type: QueryType
     date_created: datetime
     date_updated: Optional[datetime]
 

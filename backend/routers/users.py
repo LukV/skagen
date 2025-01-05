@@ -27,7 +27,7 @@ def get_all_users(
 ):
     """Retrieve a list of all users in the database."""
     users = crud_users.get_all_users(db)
-    if current_user.role == 'admin':
+    if current_user.role == 'admin': # type: ignore
         return [user_schemas.AdminUserResponse(**user.__dict__) for user in users]
 
     return [user_schemas.UserResponse(**user.__dict__) for user in users]
@@ -37,7 +37,7 @@ def get_current_user_info(
     current_user: models.User = Depends(get_current_user)
 ):
     """Retrieve the current user's information."""
-    if current_user.role == 'admin':
+    if current_user.role == 'admin': # type: ignore
         return user_schemas.AdminUserResponse(**current_user.__dict__)
 
     return user_schemas.UserResponse(**current_user.__dict__)
@@ -52,7 +52,7 @@ def get_user(
     user = crud_users.get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if current_user.role == 'admin':
+    if current_user.role == 'admin': # type: ignore
         return user_schemas.AdminUserResponse(**user.__dict__)
 
     return user_schemas.UserResponse(**user.__dict__)

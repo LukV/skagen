@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from schemas import hypothesises as hypothesis_schemas
@@ -19,7 +19,8 @@ def create_hypothesis(
         user_id=current_user.id,
         content=hypothesis.content,
         extracted_topics=[],
-        extracted_terms=[]
+        extracted_terms=[],
+        query_type='unknown'
     )
     db.add(db_hypothesis)
     db.commit()
@@ -30,19 +31,26 @@ def update_hypothesis(
     db: Session,
     hypothesis_id: str,
     hypothesis_update: hypothesis_schemas.HypothesisUpdate
-) -> models.Hypothesis:
+) -> Tuple[models.Hypothesis, bool]:
     """
     Updates an existing hypothesis's details in the database.
     """
     db_hypothesis = db.query(models.Hypothesis).filter(models.Hypothesis.id == hypothesis_id).first()
     if not db_hypothesis:
         raise HTTPException(status_code=404, detail="Hypothesis not found.")
+    
+    is_content_updated = bool(
+        hypothesis_update.content and hypothesis_update.content != db_hypothesis.content
+    )
+
     update_data = hypothesis_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_hypothesis, key, value)
+
     db.commit()
     db.refresh(db_hypothesis)
-    return db_hypothesis
+
+    return db_hypothesis, is_content_updated
 
 def delete_hypothesis(db: Session, hypothesis_id: str) -> Optional[models.Hypothesis]:
     """
@@ -63,9 +71,12 @@ def delete_hypothesis(db: Session, hypothesis_id: str) -> Optional[models.Hypoth
 
 def get_all_hypothesises(db: Session, current_user: models.User) -> List[models.Hypothesis]:
     """
-    Retrieves all hypothesises from the database.
+    Retrieves all hypotheses from the database.
+
+    If the current user is an admin, retrieves all hypotheses.
+    Otherwise, retrieves only the hypotheses created by the user.
     """
-    if current_user.role == 'admin':
+    if current_user.role == 'admin':   # type: ignore # pylint: disable=E1136
         return db.query(models.Hypothesis).all()
     else:
         return db.query(models.Hypothesis).filter(models.Hypothesis.user_id == current_user.id).all()

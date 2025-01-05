@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Depends, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from crud import hypothesises as crud_hypothesises
 from schemas import hypothesises as hypothesis_schemas
@@ -7,17 +7,22 @@ from db.database import get_db
 from db import models
 from core.auth import get_current_user
 from core.utils import is_admin_or_entity_owner
+from pipeline.orchestrator import start_validation_pipeline
 
 router = APIRouter()
 
 @router.post("/", response_model=hypothesis_schemas.HypothesisResponse)
 def create_hypothesis(
     hypothesis: hypothesis_schemas.HypothesisCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
     ):
     """Create a new hypothesis in the database."""
-    return crud_hypothesises.create_hypothesis(db, hypothesis, current_user)
+    created_hypothesis = crud_hypothesises.create_hypothesis(db, hypothesis, current_user)
+    hypothesis_id = str(created_hypothesis.id)
+    background_tasks.add_task(start_validation_pipeline, hypothesis_id, db)  # Add pipeline task
+    return created_hypothesis
 
 @router.get("/", response_model=List[hypothesis_schemas.HypothesisResponse])
 def get_all_hypothesises(
@@ -44,6 +49,7 @@ def get_hypothesis(
 def update_hypothesis(
     hypothesis_id: str,
     hypothesis_update: hypothesis_schemas.HypothesisUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(
         is_admin_or_entity_owner(
@@ -54,7 +60,15 @@ def update_hypothesis(
     ) # pylint: disable=W0613
 ):
     """Update an existing hypothesis's details."""
-    return crud_hypothesises.update_hypothesis(db, hypothesis_id, hypothesis_update)
+    updated_hypothesis, is_content_updated = crud_hypothesises.update_hypothesis(
+        db, hypothesis_id, hypothesis_update
+    )
+
+    if is_content_updated:
+        hypothesis_id = str(updated_hypothesis.id)
+        background_tasks.add_task(start_validation_pipeline, hypothesis_id, db)
+
+    return updated_hypothesis
 
 @router.delete("/{hypothesis_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_hypothesis(

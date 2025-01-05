@@ -15,7 +15,7 @@ from crud import users as crud_users
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(env_path)
 
-SECRET_KEY = os.getenv("SECRET_KEY").encode()
+SECRET_KEY = os.getenv("SECRET_KEY").encode() # type: ignore
 ALGORITHM = os.getenv("ALGORITHM", "HS256")  # Default to HS256 if not set
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
@@ -49,7 +49,7 @@ def get_current_user(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
+        email: str = payload.get("sub") # type: ignore
         if email is None:
             raise credentials_exception
     except JWTError as exc:

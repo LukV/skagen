@@ -25,5 +25,7 @@ class Hypothesis(Base):
     status = Column(String, default='Pending')
     extracted_topics = Column(JSON, nullable=False, default=[])
     extracted_terms = Column(JSON, nullable=False, default=[])
+    extracted_entities = Column(JSON, nullable=False, default=[])
+    query_type = Column(String, nullable=False, default='unknown')
     date_created = Column(DateTime(timezone=True), server_default=func.now()) # pylint: disable=E1102
     date_updated = Column(DateTime(timezone=True), onupdate=func.now()) # pylint: disable=E1102
