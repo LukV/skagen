@@ -78,7 +78,7 @@ def get_all_hypothesises(db: Session, current_user: models.User) -> List[models.
     If the current user is an admin, retrieves all hypotheses.
     Otherwise, retrieves only the hypotheses created by the user.
     """
-    if current_user.role == 'admin':   # type: ignore # pylint: disable=E1136
+    if current_user.role == 'admin':   # pylint: disable=E1136
         return db.query(models.Hypothesis).all()
 
     return db.query(models.Hypothesis) \

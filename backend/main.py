@@ -1,10 +1,15 @@
 import os
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from core.logging import configure_logging
-from core.config import setup_cors
-from routers import users, auth, hypothesis
-from db.database import Base, engine
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+from fastapi import FastAPI # pylint: disable=C0413
+from fastapi.staticfiles import StaticFiles # pylint: disable=C0413
+from core.logging import configure_logging # pylint: disable=C0413
+from core.config import setup_cors # pylint: disable=C0413
+from routers import users, auth, hypothesis # pylint: disable=C0413
+from db.database import Base, engine # pylint: disable=C0413
 
 # Configure logging
 configure_logging()

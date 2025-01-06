@@ -1,9 +1,14 @@
+import json
 import logging
+import os
 from sqlalchemy.orm import Session
 from pipeline.steps.nlu import extract_topic_terms
 from pipeline.steps.academic_search import perform_academic_search
+from pipeline.steps.ranking import rank_search_results
 from pipeline.steps.summarization import summarize_results
 from db.models import Hypothesis
+
+DEBUG_MODE = os.getenv("DEBUG", "False").lower() in ("true", "1")
 
 logger = logging.getLogger(__name__)
 
@@ -35,20 +40,39 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
 
         db.commit()
 
-        # Step 3: Check if the query type is supported, TODO: filter out harmful queries
-        # if hypothesis.query_type != "research-based":
-        #     hypothesis.status = "Skipped"  # Mark as skipped for unsupported types
-        #     hypothesis.details = f"Query type '{hypothesis.query_type}' \
-        #               not handled in this pipeline."
-        #     db.commit()
-        #     return f"Skipped: Query type '{hypothesis.query_type}' not handled."
+        # Step 3: TODO: Check if the query is plausible / filter out harmful queries
+        if hypothesis.query_type != "research-based":
+            hypothesis.status = "Skipped"  # Mark as skipped for unsupported types
+            db.commit()
+            return f"Skipped: Query type '{hypothesis.query_type}' not handled."
 
         # Step 4: Academic Search
-        search_results = await perform_academic_search(hypothesis)
+        search_results = await perform_academic_search(
+            hypothesis, 
+            excludeFulltext=True
+        )
+        if DEBUG_MODE:
+            output_file = "../debug/search_results.json"
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)  # Ensure the directory exists
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(search_results, f, ensure_ascii=False, indent=4)
 
         # Store or cache search results in the database (implementation omitted)
 
-        # Step 4: Summarization (placeholder for now)
+        # Step 5: Similarity ranking
+        ranked_results = await rank_search_results(
+            hypothesis.content,
+            search_results,
+            top_n=10
+        )
+        if DEBUG_MODE:
+            output_file = "../debug/ranked_results.json"
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)  # Ensure the directory exists
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(ranked_results, f, ensure_ascii=False, indent=4)
+
+
+        # Step 6: Summarization (placeholder for now)
         summary = await summarize_results(search_results)
         # Store summary in the database or update hypothesis
         hypothesis.status = "Completed" # type: ignore

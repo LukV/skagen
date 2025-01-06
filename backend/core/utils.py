@@ -14,7 +14,7 @@ def is_admin(
     current_user: models.User = Depends(get_current_user)
 ):
     """Evaluates if the logged in user has role admin."""
-    if current_user.role != 'admin': # type: ignore
+    if current_user.role != 'admin':
         raise HTTPException(status_code=403, detail="Admin privileges required")
     return current_user
 
@@ -34,7 +34,7 @@ def is_admin_or_entity_owner(
         db: Session = Depends(get_db),
         current_user: models.User = Depends(get_current_user),
     ):
-        if current_user.role == "admin": # type: ignore
+        if current_user.role == "admin":
             return current_user
 
         entity = entity_getter(db, entity_id)

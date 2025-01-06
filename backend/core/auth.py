@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -7,15 +6,11 @@ from passlib.context import CryptContext
 from jose import jwt, JWTError
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from db.database import get_db
 from crud import users as crud_users
 
-env_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(env_path)
-
-SECRET_KEY = os.getenv("SECRET_KEY").encode() # type: ignore
+SECRET_KEY = os.getenv("SECRET_KEY").encode()
 ALGORITHM = os.getenv("ALGORITHM", "HS256")  # Default to HS256 if not set
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))

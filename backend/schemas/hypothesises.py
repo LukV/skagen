@@ -1,12 +1,13 @@
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, ConfigDict, Field, EmailStr, model_validator
 from enum import Enum
+from pydantic import BaseModel, ConfigDict, Field
 
 class HypothesisStatus(str, Enum):
     PENDING = "Pending"
     PROCESSING = "Processing"
     COMPLETED = "Completed"
+    SKIPPED = "Skipped"
     FAILED = "Failed"
 
 class QueryType(str, Enum):

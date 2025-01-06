@@ -1,9 +1,5 @@
 import json
-from dotenv import load_dotenv
 from openai import OpenAI
-
-# Load variables from .env into os.environ
-load_dotenv()
 
 client = OpenAI()
 
