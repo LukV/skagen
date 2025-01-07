@@ -111,15 +111,12 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
         title = parsed_paper.get("title", "No Title")
         citation_apa = parsed_paper.get("citation_apa", "No Citation")
         snippet = paper.get("abstract", "No abstract provided")
-        full_text = paper.get("full_text", "No full text available")
 
         papers_list.append(
             f"{idx}. Citation (APA-like): {citation_apa}\n"
             f"   Title: {title}\n"
             f"   Abstract/Snippet:\n"
             f"   {snippet}\n"
-            f"   Full text:\n"
-            f"   {full_text}\n"
         )
 
     papers_str = "\n".join(papers_list)
@@ -131,10 +128,13 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
         "   - Cite each source inline using academically recognized style (e.g., APA-like). "
         "2. Classify the user’s hypothesis as one of:\n"
         "   - 'valid' (supported by most evidence)\n"
-        "   - 'debatable' (some evidence supports, some contradicts or is inconclusive)\n"
+        "   - 'partially supported' (some evidence supports)\n"
+        "   - 'debatable' (some evidence supports, but some contradicts or is inconclusive)\n"
         "   - 'incorrect' (most evidence refutes or contradicts)\n"
-        "   - or use a more nuanced label (e.g., 'partially supported') if appropriate.\n"
-        "3. Format your final answer strictly as valid JSON with the following fields:\n"
+        "3. Provide your chain-of-thought in the final JSON to show how you arrived at your \
+            conclusion. "
+        "   - Keep it succinct, but show the key steps used in reasoning.\n"
+        "4. Format your final answer strictly as valid JSON with the following fields:\n"
         "   {\n"
         "     \"label\": \"...\",\n"
         "     \"chain_of_thought\": [...],  \n"
@@ -148,10 +148,11 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
         "   - 'motivation': a more detailed justification of how you reached the 'label' \
                     using evidence\n"
         "   - 'sources': a list of academically formatted references (author, year, title, URL)\n\n"
-        "4. Do not invent or cite sources that are not in the provided search results.\n"
-        "5. Do not include additional keys in your JSON; adhere to the exact schema.\n"
-        "6. Make sure the JSON is valid (no trailing commas, no additional text \
+        "5. Do not invent or cite sources that are not in the provided search results.\n"
+        "6. Do not include additional keys in your JSON; adhere to the exact schema.\n"
+        "7. Make sure the JSON is valid (no trailing commas, no additional text \
                     outside the JSON).\n"
+        "8. Remember: the chain-of-thought must appear in the final JSON output.\n"
     )
 
     prompt = (
