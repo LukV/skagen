@@ -70,13 +70,14 @@ async def _build_search_query_with_gpt(hypothesis: Hypothesis, max_length: int =
     )
 
     query = response.choices[0].message.content
+    logger.info("[CORE] search query: %s", query)
 
     return query
 
 
 async def _fetch_results(
     query: str,
-    excludeText: Optional[bool] = False,
+    exclude_text: Optional[bool] = False,
     limit: int = 5,
     scroll: bool = False,
     scroll_id: Optional[str] = None
@@ -91,7 +92,7 @@ async def _fetch_results(
         "q": query,
         "limit": str(limit),
     }
-    if excludeText:
+    if exclude_text:
         params["exclude"] = "fullText"
     if scroll:
         params["scroll"] = "true"
@@ -130,15 +131,15 @@ async def _fetch_results(
 async def perform_academic_search(
         hypothesis: Hypothesis, 
         overall_limit: int = 10,
-        excludeFulltext: Optional[bool] = False) -> List[Dict]:
+        exclude_fulltext: Optional[bool] = False) -> List[Dict]:
     """
     High-level function to query the CORE API for open-access papers.
     """
     query_str = await _build_search_query_with_gpt(hypothesis, max_length=80)
     response_data = await _fetch_results(
-        query_str, 
-        excludeFulltext, 
-        limit=overall_limit, 
+        query_str,
+        exclude_fulltext,
+        limit=overall_limit,
         scroll=False
     )
 
