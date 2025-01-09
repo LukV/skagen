@@ -44,6 +44,7 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
         if hypothesis.query_type != "research-based":
             hypothesis.status = "Skipped"  # Mark as skipped for unsupported types
             db.commit()
+            print(f"Skipped: Query type '{hypothesis.query_type}' not handled.")
             return f"Skipped: Query type '{hypothesis.query_type}' not handled."
 
         # Step 4: Academic Search

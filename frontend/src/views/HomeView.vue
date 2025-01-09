@@ -1,173 +1,114 @@
 <template>
-    <div class="home-page">
-        <h1>Your claim, grounded in <br /> open research</h1>
+  <v-container>
+    <NavigationDrawer v-model:drawer="drawer" />
+    <AppBar @toggle-drawer="toggleDrawer" />
+    <v-main>
+      <v-container fluid class="d-flex align-center justify-center" style="height: 100vh;">
+        <div style="max-width: 600px; width: 100%;">
+          <h2 class="text-h5 mb-6 text-center">Your claim, grounded in open research</h2>
 
-        <!-- Multiline Hypothesis Input Section -->
-        <div class="input-container">
-            <textarea 
-                placeholder="Write your hypotheses here..." 
-                rows="3"
-                v-model="claim"
-                @keyup.enter="handleEnter"></textarea>
-            <button @click="submitClaim">
-                <span>&#8594;</span>
-            </button>
-        </div>
+          <v-textarea clearable variant="outlined" placeholder="Write your claim here..." rows="3" auto-grow
+            v-model="claim" class="custom-textarea" @keydown="handleKeydown">
+            <template #append-inner>
+              <v-btn icon variant="plain" class="bottom-right-icon" @click="submitClaim">
+                <v-icon>mdi-arrow-right-thin</v-icon>
+              </v-btn>
+            </template>
+          </v-textarea>
+          <div>
+            <p class="text-subtitle-1 mb-2">Or try these:</p>
+            <div>
+              <p class="ml-4 mb-2 clickable" @click="setClaim('Social media increase polarization')">
+                ➜ Social media increase polarization
+              </p>
+              <p class="ml-4 clickable"
+                @click="setClaim('Solar panels require more energy to produce than they generate in their lifetime.')">
+                ➜ Solar panels require more energy to produce than they generate in their lifetime.
+              </p>
+            </div>
+          </div>
 
-        <!-- Suggested Hypotheses -->
-        <div class="suggestions">
-            <p>Or try these:</p>
-            <ul>
-                <li>➜ Social media increase polarization</li>
-                <li>➜ Solar panels require more energy to produce than they generate in their lifetime.</li>
-            </ul>
-        </div>
+          <v-divider class="my-6"></v-divider>
 
-        <!-- Quote Section -->
-        <div class="quote">
-            <blockquote>
-                <em>
-                    "... how can you have an opinion if you are not informed? If everybody always lies
-                    to you, the consequence is not that you believe the lies, but rather that nobody
-                    believes anything any longer. ... And a people that no longer can believe anything
-                    cannot make up its mind. It is deprived not only of its capacity to act but also
-                    of its capacity to think and to judge. And with such a people you can then do
-                    what you please."
-                </em>
-                <span>– Hannah Arendt (1974)</span>
-            </blockquote>
+          <blockquote>
+            <em>
+              "... how can you have an opinion if you are not informed? If everybody always lies
+              to you, the consequence is not that you believe the lies, but rather that nobody
+              believes anything any longer. ... And a people that no longer can believe anything
+              cannot make up its mind. It is deprived not only of its capacity to act but also
+              of its capacity to think and to judge. And with such a people you can then do
+              what you please."
+            </em>
+            <div class="text-right mt-2">– Hannah Arendt (1974)</div>
+          </blockquote>
         </div>
-    </div>
+      </v-container>
+    </v-main>
+  </v-container>
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import NavigationDrawer from "../components/NavigationDrawer.vue";
+import AppBar from "../components/AppBar.vue";
 
 export default {
-    name: 'HomeView',
-    data() {
-        return {
-            claim: '',
-        };
+  name: "HomeView",
+  components: {
+    NavigationDrawer,
+    AppBar,
+  },
+  data: () => ({
+    drawer: true,
+    claim: "",
+  }),
+  methods: {
+    handleKeydown(event) {
+      if (event.key === "Enter") {
+        if (event.shiftKey) {
+          return;
+        }
+        event.preventDefault();
+        this.submitClaim();
+      }
     },
-    methods: {
-        ...mapActions(['setClaim']),
-        submitClaim() {
-            if (this.claim.trim()) {
-                this.setClaim(this.claim); // Save to Vuex and localStorage
-                this.$router.push('/claim');
-            }
-        },
-        handleEnter(event) {
-            if (!event.shiftKey) {
-                event.preventDefault();
-                this.submitClaim();
-            }
-        },
+    toggleDrawer() {
+      this.drawer = !this.drawer;
     },
+    setClaim(claim) {
+      this.claim = claim;
+    },
+    submitClaim() {
+      if (this.claim.trim()) {
+        // Handle the submission logic (e.g., API call, logging, etc.)
+        console.log("Submitted claim:", this.claim);
+
+        // Optionally, clear the textarea
+        this.claim = "";
+      } else {
+        console.log("Claim is empty");
+      }
+    },
+  },
 };
 </script>
 
 <style scoped>
-.home-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    text-align: center;
-    font-family: Inter, sans-serif;
-    height: 80vh;
+.clickable {
+  cursor: pointer;
+  transition: color 0.3s;
 }
 
-h1 {
-    font-family: var(--font-heading, sans-serif) !important;
-    font-weight: var(--font-weight-bold, 600);
-    font-size: 2.5rem;
-    margin-bottom: var(--spacing-lg) !important;
+.custom-textarea {
+  position: relative;
 }
 
-/* Input Section */
-.input-container {
-    position: relative;
-    width: 100%;
-    max-width: 570px;
-    margin-bottom: 2rem;
-}
-
-textarea {
-    width: 100%;
-    padding: 1rem;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    resize: none;
-    box-sizing: border-box;
-    outline: none;
-}
-
-button {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #666;
-}
-
-/* Suggestions */
-.suggestions {
-    width: 100%;
-    max-width: 570px;
-    text-align: left;
-    margin-bottom: 2rem;
-}
-
-.suggestions p {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.suggestions ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.suggestions li {
-    font-size: 1rem;
-    margin: 0.3rem 0;
-}
-
-/* Quote Section */
-.quote {
-    width: 100%;
-    max-width: 570px;
-    text-align: left;
-    font-size: 1rem;
-    line-height: 1.5;
-    color: #555;
-}
-
-blockquote {
-    border-left: 4px solid #ccc;
-    padding-left: 1rem;
-    margin: 0;
-    font-style: italic;
-}
-
-blockquote span {
-    display: block;
-    margin-top: 0.5rem;
-    font-weight: 600;
-}
-
-/* On mobile hide sidebar by default */
-@media (max-width: 600px) {
-    .home-page {
-        height: 100vh;
-    }
+.bottom-right-icon {
+  position: absolute;
+  bottom: 8px;
+  /* Adjust to match your design */
+  right: 8px;
+  /* Adjust to match your design */
+  color: var(--v-theme-on-surface);
+  /* Optional: match the theme */
 }
 </style>
