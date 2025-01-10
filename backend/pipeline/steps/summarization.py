@@ -144,10 +144,9 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
         "   }\n"
         "   - 'label': your classification\n"
         "   - 'chain_of_thought': a short bullet list of your reasoning steps\n"
-        "   - 'summary': a short synthesis of the search results, referencing sources inline\n"
-        "   - 'motivation': a more detailed justification of how you reached the 'label' \
-                    using evidence\n"
-        "   - 'sources': a list of academically formatted references (author, year, title, URL)\n\n"
+        "   - 'summary': your summary, as instructed in point 1\n"
+        "   - 'motivation': a justification of how you reached the 'label' using evidence\n"
+        "   - 'sources': the title and citation from sources used from relevant search results\n\n"
         "5. Do not invent or cite sources that are not in the provided search results.\n"
         "6. Do not include additional keys in your JSON; adhere to the exact schema.\n"
         "7. Make sure the JSON is valid (no trailing commas, no additional text \

@@ -17,6 +17,7 @@ def create_hypothesis(
     db_hypothesis = models.Hypothesis(
         id=hypothesis_id,
         user_id=current_user.id,
+        parent_id='None',
         content=hypothesis.content,
         extracted_topics=[],
         extracted_terms=[],

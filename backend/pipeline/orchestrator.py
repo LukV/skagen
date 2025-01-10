@@ -6,7 +6,8 @@ from pipeline.steps.nlu import extract_topic_terms
 from pipeline.steps.academic_search import perform_academic_search
 from pipeline.steps.ranking import rank_search_results
 from pipeline.steps.summarization import summarize_results
-from db.models import Hypothesis
+from db.models import Hypothesis, ValidationResult
+from core import utils
 
 DEBUG_MODE = os.getenv("DEBUG", "False").lower() in ("true", "1")
 
@@ -54,7 +55,7 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
         )
         # if DEBUG_MODE:
         #     output_file = "../debug/search_results.json"
-        #     os.makedirs(os.path.dirname(output_file), exist_ok=True)  
+        #     os.makedirs(os.path.dirname(output_file), exist_ok=True)
         #     with open(output_file, "w", encoding="utf-8") as f:
         #         json.dump(search_results, f, ensure_ascii=False, indent=4)
 
@@ -81,7 +82,22 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
         summary = await summarize_results(filtered_results, hypothesis)
         print(summary)
 
-        # Store summary in the database or update hypothesis
+        # Store summary
+        validation_result = ValidationResult(
+            id=utils.generate_id('V'),
+            hypothesis_id=hypothesis.id,
+            label=summary.get("label"),
+            summary=summary.get("summary"),
+            motivation=summary.get("motivation"),
+            chain_of_thought=summary.get("chain_of_thought"),
+            sources=summary.get("sources", [])
+        )
+        db.add(validation_result)
+        db.commit()
+        db.refresh(validation_result)
+
+
+        # Update hypothesis status
         hypothesis.status = "Completed" # type: ignore
         db.commit()
 
