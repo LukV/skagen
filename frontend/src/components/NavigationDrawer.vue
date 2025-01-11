@@ -1,6 +1,11 @@
 <template>
     <v-navigation-drawer :model-value="drawer" @update:model-value="$emit('update:drawer', $event)">
         <div class="d-flex justify-space-between align-center py-2 px-4">
+            <div class="logo-container">
+                <v-icon color="black">
+                    mdi-epsilon
+                </v-icon>
+            </div>
             <h1 class="mb-0">Hypothesis</h1>
             <v-btn variant="plain" icon @click="createNewThread">
                 <v-icon>mdi-square-edit-outline</v-icon>

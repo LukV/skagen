@@ -47,10 +47,8 @@ class ValidationResult(Base):
     hypothesis_id = Column(String, ForeignKey("hypothesises.id"), index=True, nullable=False)
     hypothesis = relationship("Hypothesis", back_populates="validation_results")
 
-    label = Column(String, nullable=True)
-    summary = Column(String, nullable=True)
+    classification = Column(String, nullable=True)
     motivation = Column(String, nullable=True)
-    chain_of_thought = Column(JSON, nullable=True, default=[])
     sources = Column(JSON, nullable=True, default=[])
     date_created = Column(DateTime(timezone=True), server_default=func.now()) # pylint: disable=E1102
     date_updated = Column(DateTime(timezone=True), onupdate=func.now()) # pylint: disable=E1102

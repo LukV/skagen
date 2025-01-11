@@ -1,8 +1,4 @@
 <template>
-  <v-container>
-    <NavigationDrawer v-model:drawer="drawer" />
-    <AppBar @toggle-drawer="toggleDrawer" />
-    <v-main>
       <v-container fluid class="d-flex align-center justify-center" style="height: 100vh;">
         <div style="max-width: 600px; width: 100%;">
           <h2 class="text-h5 mb-6 text-center">Your claim, grounded in open research</h2>
@@ -43,22 +39,12 @@
           </blockquote>
         </div>
       </v-container>
-    </v-main>
-  </v-container>
 </template>
 
 <script>
-import NavigationDrawer from "../components/NavigationDrawer.vue";
-import AppBar from "../components/AppBar.vue";
-
 export default {
   name: "HomeView",
-  components: {
-    NavigationDrawer,
-    AppBar,
-  },
   data: () => ({
-    drawer: true,
     claim: "",
   }),
   methods: {
@@ -70,9 +56,6 @@ export default {
         event.preventDefault();
         this.submitClaim();
       }
-    },
-    toggleDrawer() {
-      this.drawer = !this.drawer;
     },
     setClaim(claim) {
       this.claim = claim;

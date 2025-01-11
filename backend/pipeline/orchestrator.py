@@ -45,7 +45,6 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
         if hypothesis.query_type != "research-based":
             hypothesis.status = "Skipped"  # Mark as skipped for unsupported types
             db.commit()
-            print(f"Skipped: Query type '{hypothesis.query_type}' not handled.")
             return f"Skipped: Query type '{hypothesis.query_type}' not handled."
 
         # Step 4: Academic Search
@@ -53,11 +52,11 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
             hypothesis,
             exclude_fulltext=False
         )
-        # if DEBUG_MODE:
-        #     output_file = "../debug/search_results.json"
-        #     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        #     with open(output_file, "w", encoding="utf-8") as f:
-        #         json.dump(search_results, f, ensure_ascii=False, indent=4)
+        if DEBUG_MODE:
+            output_file = "../debug/search_results.json"
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(search_results, f, ensure_ascii=False, indent=4)
 
         # Store or cache search results in the database (implementation omitted)
 
@@ -86,10 +85,8 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
         validation_result = ValidationResult(
             id=utils.generate_id('V'),
             hypothesis_id=hypothesis.id,
-            label=summary.get("label"),
-            summary=summary.get("summary"),
+            classification=summary.get("classification"),
             motivation=summary.get("motivation"),
-            chain_of_thought=summary.get("chain_of_thought"),
             sources=summary.get("sources", [])
         )
         db.add(validation_result)

@@ -124,34 +124,30 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
     # Instructions for final output
     instructions = (
         "Based on these search results:\n"
-        "1. Summarize their key points relevant to the user’s hypothesis. "
-        "   - Cite each source inline using academically recognized style (e.g., APA-like). "
-        "2. Classify the user’s hypothesis as one of:\n"
-        "   - 'valid' (supported by most evidence)\n"
-        "   - 'partially supported' (some evidence supports)\n"
-        "   - 'debatable' (some evidence supports, but some contradicts or is inconclusive)\n"
-        "   - 'incorrect' (most evidence refutes or contradicts)\n"
-        "3. Provide your chain-of-thought in the final JSON to show how you arrived at your \
-            conclusion. "
-        "   - Keep it succinct, but show the key steps used in reasoning.\n"
-        "4. Format your final answer strictly as valid JSON with the following fields:\n"
-        "   {\n"
-        "     \"label\": \"...\",\n"
-        "     \"chain_of_thought\": [...],  \n"
-        "     \"summary\": \"...\",\n"
-        "     \"motivation\": \"...\",\n"
-        "     \"sources\": [...]\n"
-        "   }\n"
-        "   - 'label': your classification\n"
-        "   - 'chain_of_thought': a short bullet list of your reasoning steps\n"
-        "   - 'summary': your summary, as instructed in point 1\n"
-        "   - 'motivation': a justification of how you reached the 'label' using evidence\n"
-        "   - 'sources': the title and citation from sources used from relevant search results\n\n"
+        "### Task\n"
+        "Given the hypothesis and the list of search results:\n"
+        "1. **Classify** the hypothesis:\n"
+        "   - `[A] Supported`: Evidence agrees with the hypothesis.\n"
+        "   - `[B] Partially Supported`: Some evidence agrees; others are neutral \
+            or contradictory.\n"
+        "   - `[C] Inconclusive`: Evidence is neutral or conflicting.\n"
+        "   - `[D] Refuted`: Evidence disagrees with the hypothesis.\n\n"
+        "2. **Motivation**: Provide an explanation for the classification, both general and \
+              per relevant search result, using numbered references to citation numbers.\n\n"
+        "3. **Sources**: List *all* sources by index, including the citation and URL.\n\n"
+        "### Output Format\n"
+        "{{\n"
+        "    \"classification\": \"A | B | C | D\",\n"
+        "    \"motivation\": \"Explanation with references to source indices.\",\n"
+        "    \"sources\": [\n"
+        "        {{\"index\": 1, \"citation\": \"APA-like citation\", \"url\": \"source URL\"}},\n"
+        "        ...\n"
+        "    ]\n"
+        "}}"
         "5. Do not invent or cite sources that are not in the provided search results.\n"
         "6. Do not include additional keys in your JSON; adhere to the exact schema.\n"
         "7. Make sure the JSON is valid (no trailing commas, no additional text \
-                    outside the JSON).\n"
-        "8. Remember: the chain-of-thought must appear in the final JSON output.\n"
+                    outside the JSON, no additional or redundant braces, characters escaped).\n"
     )
 
     prompt = (
@@ -168,10 +164,8 @@ async def _perform_llm_summarization(prompt: str) -> Dict[str, Any]:
     """
     Uses one LLM prompt to extract:
       1) label
-      2) chain_of_thought
-      3) summary
-      4) motivation
-      5) sources
+      2) summary
+      3) motivation
     Returns a dict.
     """
     response = client.chat.completions.create(
@@ -188,15 +182,26 @@ async def _perform_llm_summarization(prompt: str) -> Dict[str, Any]:
     )
 
     content = response.choices[0].message.content
+    print(content)
 
     try:
-        parsed = json.loads(content) # type: ignore
-    except json.JSONDecodeError:
+        # Handle extra braces
+        sanitized_content = content.strip()
+        if sanitized_content.startswith('{{') and sanitized_content.endswith('}}'):
+            sanitized_content = sanitized_content[1:-1]  # Remove one level of braces
+
+        # Sanitize invalid Unicode sequences
+        sanitized_content = re.sub(r'\\u([0-9a-fA-F]{0,3}[^0-9a-fA-F])', r'\\u00\1', sanitized_content)
+        sanitized_content = sanitized_content.replace('\n', '').replace('\r', '').strip()
+
+        # Parse the JSON
+        parsed = json.loads(sanitized_content)
+    except (OpenAIError, json.JSONDecodeError) as e:
         # Fallback if the LLM output isn't valid JSON
         parsed = {
-            "named_entities": [],
-            "keywords": [],
-            "topics": []
+            "classification": "error",
+            "motivation": f"Internal error: {e}",
+            "sources": []
         }
 
     return parsed
@@ -220,10 +225,8 @@ async def summarize_results(
     if not search_results:
         logger.warning("No search results provided to summarization step.")
         return {
-            "label": "no_data",
-            "summary": "No papers available for summarization.",
-            "motivation": "No search results were provided.",
-            "chain_of_thought": [],
+            "classification": "no_data",
+            "motivation": "No papers were provided.",
             "sources": []
         }
 
@@ -232,12 +235,10 @@ async def summarize_results(
     try:
         llm_response = await _perform_llm_summarization(prompt)
         return llm_response
-    except (OpenAIError, json.JSONDecodeError) as e:  # type: ignore
+    except (OpenAIError, json.JSONDecodeError) as e:
         logger.error("Error summarizing results: %s", str(e))
         return {
-            "label": "error",
-            "summary": "An error occurred during summarization.",
+            "classification": "error",
             "motivation": f"Internal error: {e}",
-            "chain_of_thought": [],
             "sources": []
         }

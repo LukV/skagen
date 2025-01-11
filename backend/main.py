@@ -24,9 +24,9 @@ Base.metadata.create_all(bind=engine)
 setup_cors(app)
 
 # Include routers
-app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(users.router, prefix="/users", tags=["users"])
-app.include_router(hypothesis.router, prefix="/claims", tags=["claims"])
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(users.router, prefix="/users", tags=["Users"])
+app.include_router(hypothesis.router, prefix="/claims", tags=["Claims (Hypotheses)"])
 
 # Mount the static images directory at "/icons"
 static_icons_dir = os.path.join(os.path.dirname(__file__), "static", "avatars")

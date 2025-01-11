@@ -85,3 +85,26 @@ def delete_hypothesis(
 ):
     """Delete an existing hypothesis from the database. This is a hard delete."""
     crud_hypothesises.delete_hypothesis(db, hypothesis_id)
+
+@router.get("/{hypothesis_id}/validations", response_model=List[hypothesis_schemas.ValidationResultResponse])
+def get_validation_results(
+    hypothesis_id: str,
+    db: Session = Depends(get_db),
+    _current_user: models.User = Depends(get_current_user)
+):
+    """
+    Retrieve all validation results for a given hypothesis.
+    """
+    # Fetch the hypothesis to ensure it exists
+    hypothesis = crud_hypothesises.get_hypothesis_by_id(db, hypothesis_id)
+    if not hypothesis:
+        raise HTTPException(status_code=404, detail="Hypothesis not found")
+
+    # Get all validation results for the hypothesis
+    validation_results = crud_hypothesises.get_validation_results_by_hypothesis_id(db, hypothesis_id)
+
+    # Convert validation results to response models
+    return [
+        hypothesis_schemas.ValidationResultResponse(**validation_result.__dict__)
+        for validation_result in validation_results
+    ]

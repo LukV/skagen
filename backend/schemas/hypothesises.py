@@ -50,3 +50,14 @@ class HypothesisResponse(BaseModel):
     date_updated: Optional[datetime]
 
     model_config = ConfigDict(from_attributes=True)
+
+class ValidationResultResponse(BaseModel):
+    id: str
+    hypothesis_id: str
+    classification: Optional[str]
+    motivation: Optional[str]
+    sources: List[dict] = Field(default_factory=list)
+    date_created: datetime
+    date_updated: Optional[datetime]
+
+    model_config = ConfigDict(from_attributes=True)

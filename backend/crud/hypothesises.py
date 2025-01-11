@@ -89,4 +89,14 @@ def get_hypothesis_by_id(db: Session, hypothesis_id: str) -> Optional[models.Hyp
     """
     Fetches a hypothesis by their id.
     """
-    return db.query(models.Hypothesis).filter(models.Hypothesis.id == hypothesis_id).first()
+    return db.query(models.Hypothesis).filter(
+        models.Hypothesis.id == hypothesis_id
+    ).first()
+
+def get_validation_results_by_hypothesis_id(db: Session, hypothesis_id: str):
+    """
+    Retrieve all validation results for a given hypothesis.
+    """
+    return db.query(models.ValidationResult).filter(
+        models.ValidationResult.hypothesis_id == hypothesis_id
+    ).all()
