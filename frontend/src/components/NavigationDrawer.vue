@@ -73,7 +73,7 @@ export default {
     }),
     methods: {
         createNewThread() {
-            console.log("New thread created!");
+            this.$router.push("/new");
         },
     },
 };

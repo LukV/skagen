@@ -8,7 +8,7 @@ const routes = [
   {
     path: '/',
     name: 'home',
-    alias: '/home',
+    alias: ['/home', '/new'],
     component: HomeView,
   },
   {
