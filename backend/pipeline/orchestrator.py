@@ -31,7 +31,7 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
         raise ValueError(f"Hypothesis with ID {hypothesis_id} not found.")
 
     # Raise status
-    hypothesis.status = "ExtractingTopicTerms"
+    hypothesis.status = "Processing"
     db.commit()
 
     try:
@@ -42,10 +42,6 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
         hypothesis.extracted_terms = nlu_result["keywords"]
         hypothesis.extracted_entities = nlu_result["named_entities"]
         hypothesis.query_type = nlu_result["query_type"]
-
-        # Raise status
-        hypothesis.status = "PerformingAcademicSearch"
-        db.commit()
 
         # Step 3: TODO: Check if the query is plausible / filter out harmful queries
         if hypothesis.query_type != "research-based":
@@ -64,10 +60,6 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(search_results, f, ensure_ascii=False, indent=4)
 
-        # Raise status
-        hypothesis.status = "RankingSearchResults"
-        db.commit()
-
         # TODO: Store or cache search results in the database (implementation omitted)
 
         # Step 5: Similarity ranking
@@ -82,16 +74,19 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(ranked_results, f, ensure_ascii=False, indent=4)
 
-        # Raise status
-        hypothesis.status = "SummarizingResults"
-        db.commit()
-
         # Step 6: Summarization
-        threshold = 0.5
+        max_results = 6
+        threshold = 0.2
         filtered_results = [
-            item for item in search_results
-            if item.get("similarity", 0) >= threshold
-        ]
+            item for item in ranked_results
+            if item.get("similarity", 0) > threshold
+        ][:max_results]
+
+        if not filtered_results:
+            hypothesis.status = "InsufficientSources"  # Mark as no valid results
+            db.commit()
+            return "No valid results above the threshold were found."
+        
         summary = await summarize_results(filtered_results, hypothesis)
         
         # Store summary

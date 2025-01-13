@@ -132,8 +132,13 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
             or contradictory.\n"
         "   - `[C] Inconclusive`: Evidence is neutral or conflicting.\n"
         "   - `[D] Refuted`: Evidence disagrees with the hypothesis.\n\n"
-        "2. **Motivation**: Provide an explanation for the classification, both general and \
-              per relevant search result, using numbered references to citation numbers.\n\n"
+        "2. **Motivation**: Provide an explanation for the classification, with an \
+                overall summary and then references to each source, use markdown, and \
+                    formatted as:\n"
+        "   - Brief summary of the overall findings.\n"
+        "   - Per source a list item:\n"
+        "     - *Source 1*: Supports the hypothesis by showing evidence of...\n"
+        "     - *Source 2*: Refutes the hypothesis due to...\n\n"
         "3. **Sources**: List *all* sources by index, including the citation and URL.\n\n"
         "### Output Format\n"
         "{{\n"
