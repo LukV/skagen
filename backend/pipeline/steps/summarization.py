@@ -137,8 +137,8 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
                     formatted as:\n"
         "   - Brief summary of the overall findings.\n"
         "   - Per source a list item:\n"
-        "     - *Source 1*: Supports the hypothesis by showing evidence of...\n"
-        "     - *Source 2*: Refutes the hypothesis due to...\n\n"
+        "     - Source **1**: Supports the hypothesis by showing evidence of...\n"
+        "     - Source **2**: Refutes the hypothesis due to...\n\n"
         "3. **Sources**: List *all* sources by index, including the citation and URL.\n\n"
         "### Output Format\n"
         "{{\n"
@@ -196,7 +196,11 @@ async def _perform_llm_summarization(prompt: str) -> Dict[str, Any]:
             sanitized_content = sanitized_content[1:-1]  # Remove one level of braces
 
         # Sanitize invalid Unicode sequences
-        sanitized_content = re.sub(r'\\u([0-9a-fA-F]{0,3}[^0-9a-fA-F])', r'\\u00\1', sanitized_content)
+        sanitized_content = re.sub(
+            r'\\u([0-9a-fA-F]{0,3}[^0-9a-fA-F])', 
+            r'\\u00\1', 
+            sanitized_content
+        )
         sanitized_content = sanitized_content.replace('\n', '').replace('\r', '').strip()
 
         # Parse the JSON

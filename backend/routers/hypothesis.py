@@ -14,14 +14,11 @@ router = APIRouter()
 @router.post("/", response_model=hypothesis_schemas.HypothesisResponse)
 def create_hypothesis(
     hypothesis: hypothesis_schemas.HypothesisCreate,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
     ):
     """Create a new hypothesis in the database."""
     created_hypothesis = crud_hypothesises.create_hypothesis(db, hypothesis, current_user)
-    hypothesis_id = str(created_hypothesis.id)
-    background_tasks.add_task(start_validation_pipeline, hypothesis_id, db)  # Add pipeline task
     return created_hypothesis
 
 @router.get("/", response_model=List[hypothesis_schemas.HypothesisResponse])
@@ -86,7 +83,31 @@ def delete_hypothesis(
     """Delete an existing hypothesis from the database. This is a hard delete."""
     crud_hypothesises.delete_hypothesis(db, hypothesis_id)
 
-@router.get("/{hypothesis_id}/validations", response_model=List[hypothesis_schemas.ValidationResultResponse])
+@router.post("/{hypothesis_id}/validations", status_code=status.HTTP_202_ACCEPTED)
+def run_validation_pipeline(
+    hypothesis_id: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    _current_user: models.User = Depends(get_current_user)
+):
+    """
+    Trigger the validation pipeline for a specific hypothesis.
+    """
+    # Check if the hypothesis exists
+    hypothesis = crud_hypothesises.get_hypothesis_by_id(db, hypothesis_id)
+    if not hypothesis:
+        raise HTTPException(status_code=404, detail="Hypothesis not found")
+
+    # Trigger the validation pipeline in the background
+    background_tasks.add_task(start_validation_pipeline, hypothesis_id, db)
+
+    return {
+        "message": "Validation pipeline started for hypothesis.", 
+        "hypothesis_id": hypothesis_id
+    }
+
+@router.get("/{hypothesis_id}/validations", \
+            response_model=List[hypothesis_schemas.ValidationResultResponse])
 def get_validation_results(
     hypothesis_id: str,
     db: Session = Depends(get_db),
@@ -101,7 +122,8 @@ def get_validation_results(
         raise HTTPException(status_code=404, detail="Hypothesis not found")
 
     # Get all validation results for the hypothesis
-    validation_results = crud_hypothesises.get_validation_results_by_hypothesis_id(db, hypothesis_id)
+    validation_results = crud_hypothesises. \
+        get_validation_results_by_hypothesis_id(db, hypothesis_id)
 
     # Convert validation results to response models
     return [

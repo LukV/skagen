@@ -1,7 +1,10 @@
+import asyncio
 import json
 import logging
+import time
 import os
 from sqlalchemy.orm import Session
+from messaging.redis import AsyncRedisClient
 from pipeline.steps.nlu import extract_topic_terms
 from pipeline.steps.academic_search import perform_academic_search
 from pipeline.steps.ranking import rank_search_results
@@ -12,6 +15,7 @@ from core import utils
 DEBUG_MODE = os.getenv("DEBUG", "False").lower() in ("true", "1")
 
 logger = logging.getLogger(__name__)
+redis_client = AsyncRedisClient()
 
 async def start_validation_pipeline(hypothesis_id: str, db: Session):
     """
@@ -24,9 +28,11 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
     Returns:
         None
     """
+    comment = ""
+
     # Step 1: Fetch the hypothesis
     hypothesis = db.query(Hypothesis).filter(Hypothesis.id == hypothesis_id).first()
-    
+
     if not hypothesis:
         raise ValueError(f"Hypothesis with ID {hypothesis_id} not found.")
 
@@ -35,79 +41,113 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
     db.commit()
 
     try:
+        steps = [
+            ("ExtractingTopics", extract_topic_terms),
+            ("PerformingAcademicSearch", perform_academic_search),
+            ("RankingSearchResults", rank_search_results),
+            ("SummarizingResults", summarize_results),
+        ]
 
-        # Step 2: Natural Language Understanding (NLU)
-        nlu_result = await extract_topic_terms(str(hypothesis.content))
-        hypothesis.extracted_topics = nlu_result["topics"]
-        hypothesis.extracted_terms = nlu_result["keywords"]
-        hypothesis.extracted_entities = nlu_result["named_entities"]
-        hypothesis.query_type = nlu_result["query_type"]
+        for step_name, step_function in steps:
+            # Publish status before executing the step
+            await redis_client.publish(
+                "pipeline_updates",
+                json.dumps({"id": hypothesis_id, "status": step_name, "time": time.time()})
+            )
+            await asyncio.sleep(0)  # Yield control to the event loop
 
-        # Step 3: TODO: Check if the query is plausible / filter out harmful queries
-        if hypothesis.query_type != "research-based":
-            hypothesis.status = "Skipped"  # Mark as skipped for unsupported types
-            db.commit()
-            return f"Skipped: Query type '{hypothesis.query_type}' not handled."
+            # Execute the step
+            if step_name == "ExtractingTopics":
+                result = await step_function(hypothesis.content)
+                hypothesis.extracted_topics = result["topics"]
+                hypothesis.extracted_terms = result["keywords"]
+                hypothesis.extracted_entities = result["named_entities"]
+                hypothesis.query_type = result["query_type"]
+                comment = f"Extracted topics: {hypothesis.extracted_topics}"
 
-        # Step 4: Academic Search
-        search_results = await perform_academic_search(
-            hypothesis,
-            exclude_fulltext=False
-        )
-        if DEBUG_MODE:
-            output_file = "../debug/search_results.json"
-            os.makedirs(os.path.dirname(output_file), exist_ok=True)
-            with open(output_file, "w", encoding="utf-8") as f:
-                json.dump(search_results, f, ensure_ascii=False, indent=4)
+                # Check if query type is supported
+                if hypothesis.query_type != "research-based":
+                    hypothesis.status = "Skipped"
+                    db.commit()
+                    return f"Skipped: Query type '{hypothesis.query_type}' not handled."
 
-        # TODO: Store or cache search results in the database (implementation omitted)
+            elif step_name == "PerformingAcademicSearch":
+                result = await step_function(hypothesis, exclude_fulltext=False)
+                comment = f"Search results: {len(result)}"
+                # if DEBUG_MODE:
+                #     output_file = "../debug/search_results.json"
+                #     os.makedirs(os.path.dirname(output_file), exist_ok=True)
+                #     with open(output_file, "w", encoding="utf-8") as f:
+                #         json.dump(result, f, ensure_ascii=False, indent=4)
 
-        # Step 5: Similarity ranking
-        ranked_results = await rank_search_results(
-            hypothesis.content,
-            search_results,
-            top_n=10
-        )
-        if DEBUG_MODE:
-            output_file = "../debug/ranked_results.json"
-            os.makedirs(os.path.dirname(output_file), exist_ok=True)  # Ensure the directory exists
-            with open(output_file, "w", encoding="utf-8") as f:
-                json.dump(ranked_results, f, ensure_ascii=False, indent=4)
+            elif step_name == "RankingSearchResults":
+                result = await step_function(hypothesis.content, result, top_n=10)
+                similarities = [item["similarity"] for item in result]
+                highest = round(max(similarities), 2)
+                lowest = round(min(similarities), 2)
+                comment = f"Embeddings analysis yielded a similarity range between {lowest} and {highest}." # pylint: disable=C0301
+                # if DEBUG_MODE:
+                    # output_file = "../debug/ranked_results.json"
+                    # os.makedirs(os.path.dirname(output_file), exist_ok=True)
+                    # with open(output_file, "w", encoding="utf-8") as f:
+                    #     json.dump(result, f, ensure_ascii=False, indent=4)
 
-        # Step 6: Summarization
-        max_results = 6
-        threshold = 0.2
-        filtered_results = [
-            item for item in ranked_results
-            if item.get("similarity", 0) > threshold
-        ][:max_results]
+            elif step_name == "SummarizingResults":
+                max_results = 6
+                threshold = 0.2
+                filtered_results = [
+                    item for item in result if item.get("similarity", 0) > threshold
+                ][:max_results]
 
-        if not filtered_results:
-            hypothesis.status = "InsufficientSources"  # Mark as no valid results
-            db.commit()
-            return "No valid results above the threshold were found."
-        
-        summary = await summarize_results(filtered_results, hypothesis)
-        
-        # Store summary
-        validation_result = ValidationResult(
-            id=utils.generate_id('V'),
-            hypothesis_id=hypothesis.id,
-            classification=summary.get("classification"),
-            motivation=summary.get("motivation"),
-            sources=summary.get("sources", [])
-        )
-        db.add(validation_result)
+                if not filtered_results:
+                    hypothesis.status = "InsufficientSources"
+                    db.commit()
+                    return "No valid results above the threshold were found."
+
+                result = await step_function(filtered_results, hypothesis)
+                comment = "Summarization and validation successful."
+
+                validation_result = ValidationResult(
+                    id=utils.generate_id('V'),
+                    hypothesis_id=hypothesis.id,
+                    classification=result.get("classification"),
+                    motivation=result.get("motivation"),
+                    sources=result.get("sources", [])
+                )
+                db.add(validation_result)
+                db.commit()
+                db.refresh(validation_result)
+
+            # Publish result after executing the step
+            await redis_client.publish(
+                "pipeline_updates",
+                json.dumps({
+                    "id": hypothesis_id, 
+                    "status": step_name, 
+                    "comment": comment, 
+                    "time": time.time()
+                })
+            )
+            await asyncio.sleep(0)  # Yield control to the event loop
+
+        # Mark pipeline as completed
+        hypothesis.status = "Completed"
         db.commit()
-        db.refresh(validation_result)
-
-        # Update hypothesis status
-        hypothesis.status = "Completed" # type: ignore
-        db.commit()
-
-        return summary
-    except (ValueError, TypeError, RuntimeError) as e:
+        await redis_client.publish(
+            "pipeline_updates",
+            json.dumps({"id": hypothesis_id, "status": "Completed", "time": time.time()})
+        )
+    except (asyncio.TimeoutError, ValueError, TypeError, RuntimeError) as e:
         # Handle errors and mark hypothesis as failed
         logger.error("Error during pipeline execution for hypothesis %s: %s", hypothesis_id, e)
-        hypothesis.status = "Failed" # type: ignore
+        hypothesis.status = "Failed"
         db.commit()
+        await redis_client.publish(
+            "pipeline_updates",
+            json.dumps({
+                "id": hypothesis_id, 
+                "status": "Failed", 
+                "error": str(e), 
+                "time": time.time()}
+            )
+        )

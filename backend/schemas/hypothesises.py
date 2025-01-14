@@ -6,12 +6,9 @@ from pydantic import BaseModel, ConfigDict, Field
 class HypothesisStatus(str, Enum):
     PENDING = "Pending"
     PROCESSING = "Processing"
-    EXTRACTING_TOPIC_TERMS = "ExtractingTopicTerms"
-    PERFORMING_ACADEMIC_SEARCH = "PerformingAcademicSearch"
-    RANKING_SEARCH_RESULTS = "RankingSearchResults"
-    SUMMARIZING_RESULTS = "SummarizingResults"
     COMPLETED = "Completed"
     SKIPPED = "Skipped"
+    INSUFFICIENT_SOURCES = "InsufficientSources"
     FAILED = "Failed"
 
 class QueryType(str, Enum):
