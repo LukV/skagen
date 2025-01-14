@@ -6,7 +6,7 @@ from schemas import users as user_schemas
 from db.database import get_db
 from db import models
 from core.auth import get_current_user
-from core.utils import is_admin, is_admin_or_owner
+from core.utils import is_admin, is_admin_or_entity_owner
 
 router = APIRouter()
 
@@ -27,7 +27,7 @@ def get_all_users(
 ):
     """Retrieve a list of all users in the database."""
     users = crud_users.get_all_users(db)
-    if current_user.role == 'admin':
+    if current_user.role == 'admin': # type: ignore
         return [user_schemas.AdminUserResponse(**user.__dict__) for user in users]
 
     return [user_schemas.UserResponse(**user.__dict__) for user in users]
@@ -37,7 +37,7 @@ def get_current_user_info(
     current_user: models.User = Depends(get_current_user)
 ):
     """Retrieve the current user's information."""
-    if current_user.role == 'admin':
+    if current_user.role == 'admin': # type: ignore
         return user_schemas.AdminUserResponse(**current_user.__dict__)
 
     return user_schemas.UserResponse(**current_user.__dict__)
@@ -52,7 +52,7 @@ def get_user(
     user = crud_users.get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if current_user.role == 'admin':
+    if current_user.role == 'admin': # type: ignore
         return user_schemas.AdminUserResponse(**user.__dict__)
 
     return user_schemas.UserResponse(**user.__dict__)
@@ -62,7 +62,15 @@ def update_user(
     user_id: str,
     user_update: user_schemas.UserUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(is_admin_or_owner)  # pylint: disable=W0613
+    _current_user: models.User = Depends(
+        is_admin_or_entity_owner(
+            crud_users.get_user_by_id,
+            entity_name="Hypothesis",
+            ownership_field="id",
+            entity_id_param="hypothesis_id",
+        )
+    )
+
 ):
     """Update an existing user's details."""
     return crud_users.update_user(db, user_id, user_update)

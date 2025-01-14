@@ -1,8 +1,10 @@
 # Added LVE
 *.db
+*.rdb
 *.mock.png
 backend/secrets/
 backend/static/
+debug/
 .vscode
 
 # General

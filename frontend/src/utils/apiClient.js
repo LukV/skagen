@@ -1,4 +1,3 @@
-// src/apiClient.js
 import axios from 'axios';
 import store from '@/store';
 
@@ -6,7 +5,6 @@ const apiClient = axios.create({
   baseURL: process.env.VUE_APP_API_BASE_URL,
 });
 
-// Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
     const token = store.state.accessToken;
@@ -18,7 +16,6 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle token refresh
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
