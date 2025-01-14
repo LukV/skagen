@@ -42,22 +42,22 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
 
     try:
         steps = [
-            ("ExtractingTopics", extract_topic_terms),
-            ("PerformingAcademicSearch", perform_academic_search),
-            ("RankingSearchResults", rank_search_results),
-            ("SummarizingResults", summarize_results),
+            ("ExtractingTopics", "Extracting query", extract_topic_terms),
+            ("PerformingAcademicSearch", "Search CORE database", perform_academic_search),
+            ("RankingSearchResults", "Similarity ranking", rank_search_results),
+            ("SummarizingResults", "Summerization", summarize_results),
         ]
 
-        for step_name, step_function in steps:
+        for step, title, step_function in steps:
             # Publish status before executing the step
             await redis_client.publish(
                 "pipeline_updates",
-                json.dumps({"id": hypothesis_id, "status": step_name, "time": time.time()})
+                json.dumps({"id": hypothesis_id, "step": step, "title": title, "time": time.time()})
             )
             await asyncio.sleep(0)  # Yield control to the event loop
 
             # Execute the step
-            if step_name == "ExtractingTopics":
+            if step == "ExtractingTopics":
                 result = await step_function(hypothesis.content)
                 hypothesis.extracted_topics = result["topics"]
                 hypothesis.extracted_terms = result["keywords"]
@@ -71,28 +71,23 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                     db.commit()
                     return f"Skipped: Query type '{hypothesis.query_type}' not handled."
 
-            elif step_name == "PerformingAcademicSearch":
+            elif step == "PerformingAcademicSearch":
                 result = await step_function(hypothesis, exclude_fulltext=False)
-                comment = f"Search results: {len(result)}"
-                # if DEBUG_MODE:
-                #     output_file = "../debug/search_results.json"
-                #     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-                #     with open(output_file, "w", encoding="utf-8") as f:
-                #         json.dump(result, f, ensure_ascii=False, indent=4)
+                comment = f": {len(result)} results"
 
-            elif step_name == "RankingSearchResults":
+            elif step == "RankingSearchResults":
                 result = await step_function(hypothesis.content, result, top_n=10)
                 similarities = [item["similarity"] for item in result]
                 highest = round(max(similarities), 2)
                 lowest = round(min(similarities), 2)
-                comment = f"Embeddings analysis yielded a similarity range between {lowest} and {highest}." # pylint: disable=C0301
+                comment = f"scores between {lowest} and {highest}." # pylint: disable=C0301
                 # if DEBUG_MODE:
                     # output_file = "../debug/ranked_results.json"
                     # os.makedirs(os.path.dirname(output_file), exist_ok=True)
                     # with open(output_file, "w", encoding="utf-8") as f:
                     #     json.dump(result, f, ensure_ascii=False, indent=4)
 
-            elif step_name == "SummarizingResults":
+            elif step == "SummarizingResults":
                 max_results = 6
                 threshold = 0.2
                 filtered_results = [
@@ -123,7 +118,8 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                 "pipeline_updates",
                 json.dumps({
                     "id": hypothesis_id, 
-                    "status": step_name, 
+                    "step": step, 
+                    "title": title,
                     "comment": comment, 
                     "time": time.time()
                 })
@@ -133,10 +129,7 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
         # Mark pipeline as completed
         hypothesis.status = "Completed"
         db.commit()
-        await redis_client.publish(
-            "pipeline_updates",
-            json.dumps({"id": hypothesis_id, "status": "Completed", "time": time.time()})
-        )
+
     except (asyncio.TimeoutError, ValueError, TypeError, RuntimeError) as e:
         # Handle errors and mark hypothesis as failed
         logger.error("Error during pipeline execution for hypothesis %s: %s", hypothesis_id, e)
@@ -146,7 +139,7 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
             "pipeline_updates",
             json.dumps({
                 "id": hypothesis_id, 
-                "status": "Failed", 
+                "step": "Failed", 
                 "error": str(e), 
                 "time": time.time()}
             )

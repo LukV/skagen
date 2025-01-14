@@ -31,12 +31,11 @@ async def sse_progress(
                         yield f"data: {json.dumps(data)}\n\n"
 
                         # Disconnect the client if the pipeline is completed
-                        if data["status"] in ["Completed", "Failed", "Skipped"]:
+                        if data["step"] in ["Completed"]:
                             break
 
                 await asyncio.sleep(0.1)
         finally:
-            print("ENTER FINALLY")
             await redis_client.unsubscribe(pubsub, "pipeline_updates")
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

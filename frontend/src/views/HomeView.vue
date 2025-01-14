@@ -15,11 +15,11 @@
         <p class="text-subtitle-1 mb-2">Or try these:</p>
         <div>
           <p class="ml-4 mb-2 clickable" @click="setClaim('Social media increase polarization')">
-            ➜ Social media increase polarization
+            ➜ Social media increase polarization.
           </p>
           <p class="ml-4 clickable"
-            @click="setClaim('Solar panels require more energy to produce than they generate in their lifetime.')">
-            ➜ Solar panels require more energy to produce than they generate in their lifetime.
+            @click="setClaim('Access to green spaces improves mental health in urban populations.')">
+            ➜ Access to green spaces improves mental health in urban populations.
           </p>
         </div>
       </div>
@@ -69,7 +69,10 @@ export default {
             content: this.claim,
           });
           const claimId = response.data.id;
-          this.$router.push(`/claims/${claimId}`);
+          this.$router.push({
+            path: `/claims/${claimId}`,
+            state: { claimContent: this.claim },
+          });
         } catch (error) {
           console.error("Error submitting claim:", error.response || error.message);
         }
