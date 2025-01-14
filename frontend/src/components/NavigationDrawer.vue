@@ -13,8 +13,7 @@
         </div>
 
         <v-list>
-            <v-list-item v-for="[icon, text] in main_links" :key="icon" :prepend-icon="icon" :title="text"
-                link></v-list-item>
+            <v-list-item v-for="[icon, text] in main_links" :key="icon" :prepend-icon="icon" :title="text" link></v-list-item>
         </v-list>
 
         <template v-slot:append>
@@ -34,7 +33,7 @@
               label="Dark mode"
               class="px-4"
               color="primary"
-              @click="toggleTheme"
+              v-model="darkMode"
               hide-details
             ></v-switch>
         </template>
@@ -42,13 +41,28 @@
 </template>
 
 <script setup>
+import { ref, onMounted, watch } from 'vue'
 import { useTheme } from 'vuetify'
 
 const theme = useTheme()
+const darkMode = ref(false)
 
-function toggleTheme () {
-  theme.global.name.value = theme.global.current.value.dark ? 'lightTheme' : 'darkTheme'
-}
+// Load user preference from localStorage on mount
+onMounted(() => {
+    const savedTheme = localStorage.getItem('darkMode')
+    if (savedTheme !== null) {
+        darkMode.value = JSON.parse(savedTheme)
+    } else {
+        // Default to system preference or light theme
+        darkMode.value = theme.global.current.value.dark
+    }
+})
+
+// Watch darkMode for changes and update theme accordingly
+watch(darkMode, (newValue) => {
+    theme.global.name.value = newValue ? 'darkTheme' : 'lightTheme'
+    localStorage.setItem('darkMode', JSON.stringify(newValue))
+})
 </script>
 
 <script>
@@ -78,6 +92,7 @@ export default {
     },
 };
 </script>
+
 
 <style scoped>
 a {

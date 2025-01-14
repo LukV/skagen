@@ -6,7 +6,7 @@
     <template v-if="isAuthenticated">
       <v-menu offset-y>
         <template v-slot:activator="{ props }">
-          <v-avatar v-bind="props" class="mr-4" color="tertiary" size="32">
+          <v-avatar v-bind="props" class="mr-4" color="tertiary" size="32" style="cursor: pointer;">
             {{ userInitials}}
           </v-avatar>
         </template>
@@ -14,7 +14,7 @@
           <v-list-item @click="viewProfile">
             <v-list-item-title>View Profile</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="logout">
+          <v-list-item @click="doLogout">
             <v-list-item-title>Logout</v-list-item-title>
           </v-list-item>
         </v-list>
@@ -28,7 +28,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex';
+import { mapState, mapGetters, mapActions } from 'vuex';
 
 export default {
   computed: {
@@ -55,16 +55,21 @@ export default {
     },
   },
   methods: {
+    ...mapActions(['logout']),
+
+    async doLogout() {
+      await this.logout(); 
+      this.$router.push('/home'); 
+    },
+
     viewProfile() {
       console.log("View Profile clicked!");
     },
-    logout() {
-      console.log("Logout clicked!");
-      this.$emit("logout");
-    },
+
     goToSignup() {
       this.$router.push({ name: 'signup' });
     },
+
     goToLogin() {
       this.$router.push({ name: 'login' });
     },

@@ -69,6 +69,26 @@ export default createStore({
         logout({ commit }) {
             commit('CLEAR_AUTH');
         },
+        async requestPasswordReset(_, payload) {
+            try {
+              await apiClient.post('/users/request-password-reset', payload);
+            } catch (error) {
+              console.error('Password reset request failed:', error);
+              throw error;
+            }
+        },
+        async resetPassword(_, payload) {
+            try {
+                await apiClient.post('/users/reset-password', {
+                email: payload.email,
+                new_password: payload.newPassword,
+                token: payload.token,
+                });
+            } catch (error) {
+                console.error('Password reset failed:', error);
+                throw error;
+            }
+        },
     },
     getters: {
         isAuthenticated: (state) => state.authStatus === 'authenticated',

@@ -90,3 +90,45 @@ class UserResponse(BaseModel):
 
 class AdminUserResponse(UserResponse):
     role: str  # Include 'role' only for admin responses
+
+class PasswordChange(BaseModel, PasswordValidationMixin):
+    new_password: str = Field(
+        ...,
+        description=(
+            "The new password for the user. Must be 8-128 characters long and include "
+            "at least one letter and one number."
+        )
+    )
+
+    @model_validator(mode="before")
+    def validate_fields(cls, values): # pylint: disable=C0116, E0213
+        values['new_password'] = cls.validate_password(values['new_password'])
+        return values
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr = Field(
+        ...,
+        description="The email address associated with the user account."
+    )
+
+class PasswordReset(BaseModel, PasswordValidationMixin):
+    email: EmailStr = Field(
+        ...,
+        description="The email address associated with the user account."
+    )
+    new_password: str = Field(
+        ...,
+        description=(
+            "The new password for the user. Must be 8-128 characters long and include "
+            "at least one letter and one number."
+        )
+    )
+    token: str = Field(
+        ...,
+        description="The token sent to the user for verifying the password reset request."
+    )
+
+    @model_validator(mode="before")
+    def validate_fields(cls, values): # pylint: disable=C0116, E0213
+        values['new_password'] = cls.validate_password(values['new_password'])
+        return values

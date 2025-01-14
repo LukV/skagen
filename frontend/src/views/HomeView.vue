@@ -63,6 +63,11 @@ export default {
       this.claim = claim;
     },
     async submitClaim() {
+      if (!this.$store.getters.isAuthenticated) {
+        this.$router.push({ name: 'login', query: { redirect: this.$route.fullPath } });
+        return;
+      }
+      
       if (this.claim.trim()) {
         try {
           const response = await apiClient.post("/claims/", {
