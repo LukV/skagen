@@ -24,7 +24,7 @@ class Hypothesis(Base):
     user_id = Column(String, ForeignKey("users.id"), index=True, nullable=False)
     user = relationship("User", back_populates="hypotheses")
 
-    parent_id = Column(String, ForeignKey("hypothesises.id"), nullable=True)
+    parent_id = Column(String, ForeignKey("hypothesises.id"), nullable=True, default=None)
     parent = relationship("Hypothesis", remote_side=[id], backref="children")
 
     content = Column(String, nullable=False)
