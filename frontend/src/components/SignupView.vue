@@ -2,9 +2,9 @@
   <v-dialog v-model="visible" persistent max-width="400">
     <v-form v-model="isFormValid" @submit.prevent="signUp">
       <v-card>
-        <v-card-title>Sign Up</v-card-title>
+        <v-card-title class="text-center">Sign Up</v-card-title>
         <v-card-text>
-            <v-alert
+          <v-alert
               v-if="serverError"
               type="error"
               class="mb-4"
@@ -12,23 +12,42 @@
               @click:close="serverError = ''"
             >
               {{ serverError }}
-            </v-alert>
-            <v-text-field 
+          </v-alert>
+
+          <v-btn
+            class="mb-4"
+            prepend-icon="mdi-google"
+            rounded="xs"
+            block
+            @click="initializeGoogleLogin"
+          >
+            Continue with Google
+          </v-btn>
+
+          <v-divider> or </v-divider>
+
+          <v-text-field 
               label="Email" 
               v-model="email" 
               autocomplete="off"
               :rules="[rules.required, rules.email]"
               required></v-text-field>
-            <v-text-field label="Username" v-model="username" required></v-text-field>
-            <v-text-field 
-              label="Password"
-              :append-inner-icon="show ? 'mdi-eye' : 'mdi-eye-off'" 
-              :rules="[rules.required, rules.min, rules.max, rules.letter, rules.nr]"
-              v-model="password" 
-              :type="show ? 'text' : 'password'"
-              required
-              @click:append-inner="show = !show"></v-text-field>
+
+          <v-text-field 
+            label="Username" 
+            v-model="username" 
+            required></v-text-field>
+
+          <v-text-field 
+            label="Password"
+            :append-inner-icon="show ? 'mdi-eye' : 'mdi-eye-off'" 
+            :rules="[rules.required, rules.min, rules.max, rules.letter, rules.nr]"
+            v-model="password" 
+            :type="show ? 'text' : 'password'"
+            required
+            @click:append-inner="show = !show"></v-text-field>
         </v-card-text>
+
         <v-card-actions>
           <v-btn text @click="closeModal">Cancel</v-btn>
           <v-btn 
@@ -66,9 +85,36 @@ export default {
     },
   }),
   methods: {
-    ...mapActions(['login']),
+    ...mapActions(['login', 'googleLogin']),
     closeModal() {
       this.$router.push({ name: 'home' });
+    },
+    initializeGoogleLogin() {
+      google.accounts.id.initialize({
+        client_id: '283986039712-crlk7a09dvuurc8g5ogs0ihk9561kkbg.apps.googleusercontent.com',
+        callback: this.handleGoogleCredentialResponse,
+      });
+      google.accounts.id.prompt(); // Display one-tap prompt
+    },
+    async handleGoogleCredentialResponse(response) {
+      const token = response.credential;
+      this.isLoading = true;
+
+      try {
+        await this.googleLogin({ token });
+
+        const redirectPath = this.$route.query.redirect;
+        if (redirectPath) {
+          this.$router.push(redirectPath);
+          return;
+        }
+        this.$router.push({ name: 'home' });
+      } catch (error) {
+        console.log(error)
+        this.serverError = error.response?.data?.detail || 'Google login failed.';
+      } finally {
+        this.isLoading = false;
+      }
     },
     async signUp() {
       if (!this.isFormValid) {

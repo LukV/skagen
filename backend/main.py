@@ -30,5 +30,5 @@ app.include_router(hypothesis.router, prefix="/claims", tags=["Claims (Hypothese
 app.include_router(sse.router, prefix="/sse", tags=["SSE"])
 
 # Mount the static images directory at "/icons"
-static_icons_dir = os.path.join(os.path.dirname(__file__), "static", "avatars")
+static_icons_dir = os.path.join(os.path.dirname(__file__), "static", "icons")
 app.mount("/avatars", StaticFiles(directory=static_icons_dir), name="avatars")

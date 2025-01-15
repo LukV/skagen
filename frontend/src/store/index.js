@@ -66,6 +66,17 @@ export default createStore({
                 }
             }
         },
+        async googleLogin({ commit }, { token }) {
+            try {
+                const response = await axios.post('/auth/login/google', { token });
+                commit('SET_TOKENS', response.data);
+        
+                const userResponse = await apiClient.get('/users/me');
+                commit('SET_USER', userResponse.data);
+            } catch (error) {
+                throw error.response?.data?.detail || 'Failed to login with Google.';
+            }
+        },
         logout({ commit }) {
             commit('CLEAR_AUTH');
         },

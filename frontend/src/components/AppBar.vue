@@ -6,8 +6,19 @@
     <template v-if="isAuthenticated">
       <v-menu offset-y>
         <template v-slot:activator="{ props }">
-          <v-avatar v-bind="props" class="mr-4" color="tertiary" size="32" style="cursor: pointer;">
-            {{ userInitials}}
+          <v-avatar
+            v-bind="props"
+            class="mr-4"
+            color="tertiary"
+            size="32"
+            style="cursor: pointer;"
+          >
+            <template v-if="user?.icon">
+              <img :src="userIcon" alt="User Icon" />
+            </template>
+            <template v-else>
+              {{ userInitials }}
+            </template>
           </v-avatar>
         </template>
         <v-list>
@@ -21,8 +32,12 @@
       </v-menu>
     </template>
     <template v-else>
-      <v-btn color="secondary" variant="text" class="mr-2" @click="goToSignup">Sign Up</v-btn>
-      <v-btn color="primary" variant="flat" class="mr-4" @click="goToLogin">Log In</v-btn>
+      <v-btn color="secondary" variant="text" class="mr-2" @click="goToSignup">
+        Sign Up
+      </v-btn>
+      <v-btn color="primary" variant="flat" class="mr-4" @click="goToLogin">
+        Log In
+      </v-btn>
     </template>
   </v-app-bar>
 </template>
@@ -37,13 +52,10 @@ export default {
 
     // Compute the user initials dynamically
     userInitials() {
-      console.log(this.user);
       if (this.user?.username) {
-        // Use first two capital letters from username, or fallback to first letter
         const initials = this.user.username.match(/[A-Z]/g) || [];
         return initials.length >= 2 ? initials.slice(0, 2).join('') : initials[0] || this.user.username[0].toUpperCase();
       } else if (this.user?.email) {
-        // Derive initials from email
         const [localPart] = this.user.email.split('@');
         const parts = localPart.split('.');
         if (parts.length > 1) {
@@ -53,17 +65,22 @@ export default {
       }
       return '❤️'; // Default fallback
     },
+
+    // Compute the user icon URL
+    userIcon() {
+      return this.user?.icon ? `http://localhost:8000/avatars/${this.user.icon}` : null;
+    },
   },
   methods: {
     ...mapActions(['logout']),
 
     async doLogout() {
-      await this.logout(); 
-      this.$router.push('/home'); 
+      await this.logout();
+      this.$router.push('/home');
     },
 
     viewProfile() {
-      console.log("View Profile clicked!");
+      console.log('View Profile clicked!');
     },
 
     goToSignup() {

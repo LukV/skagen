@@ -2,43 +2,65 @@
   <v-dialog v-model="visible" persistent max-width="400">
     <v-form v-model="isFormValid" @submit.prevent="doLogin">
       <v-card>
-        <v-card-title>Login</v-card-title>
-            <v-card-text>
-              <v-alert
-                v-if="serverError"
-                type="error"
-                class="mb-4"
-                dismissible
-                @click:close="serverError = ''"
-              >
-                {{ serverError }}
-              </v-alert>
-              <v-text-field 
-                label="Email" 
-                v-model="email" 
-                autocomplete="off"
-                required
-                :rules="[rules.required, rules.email]"
-              ></v-text-field>
-              <v-text-field 
-                label="Password" 
-                :append-inner-icon="show ? 'mdi-eye' : 'mdi-eye-off'"
-                :rules="[rules.required]" 
-                v-model="password" 
-                :type="show ? 'text' : 'password'" 
-                required
-                @click:append-inner="show = !show"></v-text-field>
-              <router-link to="/auth/forgot-password" class="text-body-2 forgot-password-link">
-                Forgot Password?
-              </router-link>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn text @click="closeModal">Cancel</v-btn>
-            <v-btn 
-              :loading="isLoading"
-              color="primary" 
-              type="submit">Login</v-btn>
-          </v-card-actions>
+        <v-card-title class="text-center">Login</v-card-title>
+        <v-card-text>
+          <v-alert
+            v-if="serverError"
+            type="error"
+            class="mb-4"
+            dismissible
+            @click:close="serverError = ''"
+          >
+            {{ serverError }}
+          </v-alert>
+
+          <v-btn
+            class="mb-4"
+            prepend-icon="mdi-google"
+            rounded="xs"
+            block
+            @click="initializeGoogleLogin"
+          >
+            Continue with Google
+          </v-btn>
+
+          <v-divider> or </v-divider>
+
+          <!-- Email Input -->
+          <v-text-field
+            label="Email"
+            v-model="email"
+            autocomplete="off"
+            required
+            class="mt-4"
+            :rules="[rules.required, rules.email]"
+          ></v-text-field>
+
+          <!-- Password Input -->
+          <v-text-field
+            label="Password"
+            :append-inner-icon="show ? 'mdi-eye' : 'mdi-eye-off'"
+            :rules="[rules.required]"
+            v-model="password"
+            :type="show ? 'text' : 'password'"
+            required
+            @click:append-inner="show = !show"
+          ></v-text-field>
+
+          <!-- Forgot Password Link -->
+          <router-link
+            to="/auth/forgot-password"
+            class="text-body-2 forgot-password-link"
+          >
+            Forgot Password?
+          </router-link>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text @click="closeModal">Cancel</v-btn>
+          <v-btn :loading="isLoading" color="primary" type="submit">
+            Login
+          </v-btn>
+        </v-card-actions>
       </v-card>
     </v-form>
   </v-dialog>
@@ -63,7 +85,7 @@ export default {
     },
   }),
   methods: {
-    ...mapActions(['login']),
+    ...mapActions(['login', 'googleLogin']),
     closeModal() {
       this.$router.push({ name: 'home' });
     },
@@ -100,7 +122,33 @@ export default {
       } finally {
         this.isLoading = false;
       }
-    }
+    },
+    initializeGoogleLogin() {
+      google.accounts.id.initialize({
+        client_id: '283986039712-crlk7a09dvuurc8g5ogs0ihk9561kkbg.apps.googleusercontent.com',
+        callback: this.handleGoogleCredentialResponse,
+      });
+      google.accounts.id.prompt(); // Display one-tap prompt
+    },
+    async handleGoogleCredentialResponse(response) {
+      const token = response.credential;
+      this.isLoading = true;
+
+      try {
+        await this.googleLogin({ token });
+
+        const redirectPath = this.$route.query.redirect;
+        if (redirectPath) {
+          this.$router.push(redirectPath);
+          return;
+        }
+        this.$router.push({ name: 'home' });
+      } catch (error) {
+        this.serverError = error.response?.data?.detail || 'Google login failed.';
+      } finally {
+        this.isLoading = false;
+      }
+    },
   },
 };
 </script>
