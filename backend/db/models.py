@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Column, ForeignKey, String, DateTime
+from sqlalchemy import JSON, Column, ForeignKey, String, DateTime, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -52,6 +52,26 @@ class ValidationResult(Base):
     sources = Column(JSON, nullable=True, default=[])
     date_created = Column(DateTime(timezone=True), server_default=func.now()) # pylint: disable=E1102
     date_updated = Column(DateTime(timezone=True), onupdate=func.now()) # pylint: disable=E1102
+
+class AcademicWork(Base):
+    __tablename__ = "academic_works"
+
+    id = Column(String, primary_key=True, index=True)
+    abstract = Column(String, nullable=True)
+    apa_citation = Column(String, nullable=False)
+    authors = Column(JSON, nullable=True, default=[])
+    authors_formatted = Column(String, nullable=True)
+    core_id = Column(String, nullable=False)
+    full_text = Column(String, nullable=True)
+    published_date = Column(String, nullable=True)
+    publisher = Column(JSON, nullable=True)
+    title = Column(String, nullable=False)
+    year_published = Column(String, nullable=True)
+    date_created = Column(DateTime(timezone=True), server_default=func.now()) # pylint: disable=E1102
+
+    __table_args__ = (
+        UniqueConstraint('core_id', name='uq_academicwork_core_id'),
+    )
 
 class Feedback(Base):
     __tablename__ = "hypothesis_feedback"

@@ -9,82 +9,6 @@ client = OpenAI()
 
 logger = logging.getLogger(__name__)
 
-async def _parse_core_record(record: Dict) -> Dict:
-    """Parse a CORE API record to retrieve relevant fields"""
-
-    title = record.get("title", "Untitled")
-    paper_abstract = record.get("abstract") or record.get("description", "")
-    full_text = record.get("fullText", "")
-    raw_authors = record.get("authors", [])
-    authors_formatted = []
-    for author in raw_authors:
-        full_name = author.get("name", "").strip()
-        if not full_name:
-            continue
-
-        if "," in full_name:
-            # Already in "LastName, FirstName" format
-            last_first = full_name.split(",")
-            last_name = last_first[0].strip()
-            first_name = last_first[1].strip() if len(last_first) > 1 else ""
-        else:
-            # Possibly "FirstName LastName"
-            name_parts = full_name.split()
-            last_name = name_parts[-1]
-            first_name = " ".join(name_parts[:-1])
-
-        # Build "LastName, F." (initials only for first name)
-        initials = [f"{x[0]}." for x in first_name.split() if x]  # e.g. "Melissa" -> "M."
-        initials_str = " ".join(initials)
-        if initials_str:
-            formatted_name = f"{last_name}, {initials_str}"
-        else:
-            # fallback if first name is absent
-            formatted_name = last_name
-
-        authors_formatted.append(formatted_name)
-
-    # Join multiple authors with commas for a simple APA-like style
-    authors_str = ", ".join(authors_formatted) if authors_formatted else "No listed authors"
-
-    year = record.get("yearPublished", None)
-    if not year:
-        published_date = record.get("publishedDate", "")
-        year_match = re.search(r"(\d{4})", published_date)  # simple 4-digit year
-        if year_match:
-            year = year_match.group(1)
-        else:
-            year = "n.d."  # no date
-
-    publisher = record.get("publisher", "")
-
-    display_url = ""
-    links = record.get("links", [])
-    for link in links:
-        if link.get("type") == "display":
-            display_url = link.get("url", "")
-            break
-
-    if not display_url:
-        # If we have a "downloadUrl" or something else, we could use it
-        display_url = record.get("downloadUrl", "")
-
-    # Build APA-like Citation
-    pub_str = f"{publisher}." if publisher else ""
-    apa_citation = f"{authors_str} ({year}). {title}. {pub_str} {display_url}".strip()
-
-    # Return a structured dict
-    return {
-        "title": title,
-        "abstract": paper_abstract,
-        "authors": authors_formatted,        # list of parsed authors
-        "full_text": full_text,
-        "year": year,
-        "publisher": publisher,
-        "url": display_url,
-        "citation_apa": apa_citation
-    }
-
 async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str, Any]]) -> str:
     """
     Prepare a prompt to feed into an LLM or summarization engine.
@@ -107,13 +31,14 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
     papers_intro = "Below are the relevant search results:\n"
     papers_list = []
     for idx, paper in enumerate(search_results, start=1):
-        parsed_paper = await _parse_core_record(paper)
-        title = parsed_paper.get("title", "No Title")
-        citation_apa = parsed_paper.get("citation_apa", "No Citation")
+        work_id = paper.get("id")
+        title = paper.get("title", "No Title")
+        citation_apa = paper.get("citation_apa", "No Citation")
         snippet = paper.get("abstract", "No abstract provided")
 
         papers_list.append(
-            f"{idx}. Citation (APA-like): {citation_apa}\n"
+            f"{idx}. ID: {work_id}\n"
+            f"   Citation: {citation_apa}\n"
             f"   Title: {title}\n"
             f"   Abstract/Snippet:\n"
             f"   {snippet}\n"
@@ -139,13 +64,13 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
         "   - Per source a list item:\n"
         "     - Source **1**: Supports the hypothesis by showing evidence of...\n"
         "     - Source **2**: Refutes the hypothesis due to...\n\n"
-        "3. **Sources**: List *all* sources by index, including the citation and URL.\n\n"
+        "3. **Sources**: List *all* sources by index, including the citation.\n\n"
         "### Output Format\n"
         "{{\n"
         "    \"classification\": \"A | B | C | D\",\n"
         "    \"motivation\": \"Explanation with references to source indices.\",\n"
         "    \"sources\": [\n"
-        "        {{\"index\": 1, \"citation\": \"APA-like citation\", \"url\": \"source URL\"}},\n"
+        "        {{\"index\": 1, \"citation\": \"APA-like citation\"}},\n"
         "        ...\n"
         "    ]\n"
         "}}"

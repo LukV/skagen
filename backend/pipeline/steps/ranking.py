@@ -38,7 +38,7 @@ async def rank_search_results(
     for result in search_results:
         # Fallback to empty strings if not present
         title = result.get("title") or ""
-        abstract = result.get("description") or result.get("abstract") or ""
+        abstract = result.get("abstract")
         combined_text = f"{title}\n{abstract}"
 
         embedding_vec = await _get_embedding_async(combined_text)

@@ -72,7 +72,7 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                     return f"Skipped: Query type '{hypothesis.query_type}' not handled."
 
             elif step == "PerformingAcademicSearch":
-                result = await step_function(hypothesis, exclude_fulltext=False)
+                result = await step_function(hypothesis, db, exclude_fulltext=False)
                 comment = f": {len(result)} results"
 
             elif step == "RankingSearchResults":
@@ -81,11 +81,11 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                 highest = round(max(similarities), 2)
                 lowest = round(min(similarities), 2)
                 comment = f"scores between {lowest} and {highest}." # pylint: disable=C0301
-                # if DEBUG_MODE:
-                    # output_file = "../debug/ranked_results.json"
-                    # os.makedirs(os.path.dirname(output_file), exist_ok=True)
-                    # with open(output_file, "w", encoding="utf-8") as f:
-                    #     json.dump(result, f, ensure_ascii=False, indent=4)
+                if DEBUG_MODE:
+                    output_file = "../debug/ranked_results.json"
+                    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+                    with open(output_file, "w", encoding="utf-8") as f:
+                        json.dump(result, f, ensure_ascii=False, indent=4)
 
             elif step == "SummarizingResults":
                 max_results = 6

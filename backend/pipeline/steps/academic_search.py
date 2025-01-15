@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -7,7 +8,11 @@ from datetime import datetime, timezone
 import httpx
 import dateutil.parser
 from db.models import Hypothesis
+from sqlalchemy.orm import Session
 from openai import OpenAI
+from crud.academic_works import create_academic_work
+from schemas.academic_works import AcademicWorkCreate, AcademicWorkResponse
+from fastapi.encoders import jsonable_encoder
 
 client = OpenAI()
 
@@ -129,9 +134,10 @@ async def _fetch_results(
             return data
 
 async def perform_academic_search(
-        hypothesis: Hypothesis, 
+        hypothesis: Hypothesis,
+        db: Session = None,
         overall_limit: int = 10,
-        exclude_fulltext: Optional[bool] = False) -> List[Dict]:
+        exclude_fulltext: Optional[bool] = False) -> List[AcademicWorkResponse]:
     """
     High-level function to query the CORE API for open-access papers.
     """
@@ -149,14 +155,36 @@ async def perform_academic_search(
 
     parsed_results = []
     used_titles = set()
+
     for item in results:
         title = item.get("title")
         if not title or title in used_titles:
             continue
 
-        parsed_results.append(item)
-        used_titles.add(title)
+        # Construct the academic work object
+        academic_work = AcademicWorkCreate(
+            abstract=item.get("abstract") or item.get("description", ""),
+            authors=item.get("authors", []),
+            core_id=str(item.get("id")),
+            full_text=item.get("fullText", ""),
+            published_date=item.get("publishedDate", ""),
+            publisher=item.get("publisher", ""),
+            title=title,
+            year_published=str(item.get("yearPublished")) or None
+        )
 
+        # Create the academic work in the database
+        created_work = await create_academic_work(db, academic_work)
+
+        # Convert the created work into a dictionary if needed
+        if created_work:
+            # Assuming `created_work` is an object, convert to dict
+            created_work_response = AcademicWorkResponse.model_validate(created_work)
+            created_work_dict = json.loads(created_work_response.model_dump_json())
+            used_titles.add(title)
+            parsed_results.append(created_work_dict)
+
+        # Stop if we've reached the overall limit
         if len(parsed_results) >= overall_limit:
             break
 
