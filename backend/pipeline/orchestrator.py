@@ -8,7 +8,8 @@ from messaging.redis import AsyncRedisClient
 from pipeline.steps.nlu import extract_topic_terms
 from pipeline.steps.academic_search import perform_academic_search
 from pipeline.steps.ranking import rank_search_results
-from pipeline.steps.summarization import summarize_results
+from pipeline.steps.summarization import summarize_abstracts
+from pipeline.steps.evaluation import evaluate_hypothesis
 from db.models import Hypothesis, ValidationResult
 from core import utils
 
@@ -45,7 +46,8 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
             ("ExtractingTopics", "Extracting query", extract_topic_terms),
             ("PerformingAcademicSearch", "Search CORE database", perform_academic_search),
             ("RankingSearchResults", "Similarity ranking", rank_search_results),
-            ("SummarizingResults", "Summerization", summarize_results),
+            ("SummarizingResults", "Summerization", summarize_abstracts),
+            ("EvaluatingHypothesis", "Evaluating hypothesis", evaluate_hypothesis),
         ]
 
         for step, title, step_function in steps:
@@ -77,10 +79,21 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
 
             elif step == "RankingSearchResults":
                 result = await step_function(hypothesis.content, result, top_n=10)
-                similarities = [item["similarity"] for item in result]
-                highest = round(max(similarities), 2)
-                lowest = round(min(similarities), 2)
-                comment = f"scores between {lowest} and {highest}." # pylint: disable=C0301
+
+                max_results = 6
+                threshold = 0.2
+                result = [
+                    item for item in result if item.get("similarity", 0) > threshold
+                ][:max_results]
+
+                citations = [
+                    (r.get("id"), r.get("apa_citation", "No citation available"))
+                    for r in result
+                    if "id" in r
+                ]
+
+                comment = f"Top results: {citations}" # pylint: disable=C0301
+
                 if DEBUG_MODE:
                     output_file = "../debug/ranked_results.json"
                     os.makedirs(os.path.dirname(output_file), exist_ok=True)
@@ -88,19 +101,16 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                         json.dump(result, f, ensure_ascii=False, indent=4)
 
             elif step == "SummarizingResults":
-                max_results = 6
-                threshold = 0.2
-                filtered_results = [
-                    item for item in result if item.get("similarity", 0) > threshold
-                ][:max_results]
-
-                if not filtered_results:
+                if not result:
                     hypothesis.status = "InsufficientSources"
                     db.commit()
                     return "No valid results above the threshold were found."
 
-                result = await step_function(filtered_results, hypothesis)
-                comment = "Summarization and validation successful."
+                result = await step_function(result, db)
+                comment = "Summarization successful."
+
+            elif step == "EvaluatingHypothesis":
+                result = await step_function(result, hypothesis)
 
                 validation_result = ValidationResult(
                     id=utils.generate_id('V'),
@@ -112,6 +122,8 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                 db.add(validation_result)
                 db.commit()
                 db.refresh(validation_result)
+
+                comment="Evaluation successful."
 
             # Publish result after executing the step
             await redis_client.publish(

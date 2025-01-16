@@ -1,5 +1,5 @@
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from schemas import academic_works as work_schemas
@@ -16,22 +16,24 @@ async def create_academic_work(
     """
     work_id = utils.generate_id('W')
     core_id = work.core_id
-    title = work.title
+    title = _remove_null_bytes(work.title)
+    abstract = _remove_null_bytes(work.abstract)
     authors = [{"name": getattr(author, "name", author)} for author in work.authors]
     authors_formatted = _format_authors(authors)
     year_published = work.year_published or _format_year(work.published_date)
-    publisher = work.publisher
+    publisher = _remove_null_bytes(work.publisher)
     pub_str = f"{publisher}." if publisher else ""
     apa_citation = f"{authors_formatted} ({year_published}). {title}. {pub_str}".strip()
+    full_text = _remove_null_bytes(work.full_text)
 
     db_work = models.AcademicWork(
         id = work_id,
-        abstract = work.abstract,
+        abstract = abstract,
         apa_citation = apa_citation,
         authors = authors,
         authors_formatted = authors_formatted,
         core_id = core_id,
-        full_text = work.full_text,
+        full_text = full_text,
         published_date = work.published_date,
         publisher = publisher,
         title = title,
@@ -47,6 +49,17 @@ async def create_academic_work(
             models.AcademicWork.core_id == core_id
         ).first()
     return db_work
+
+def _remove_null_bytes(value: Optional[str]) -> Optional[str]:
+    """
+    Removes null bytes (\0) from a given string. If the input is None, it returns None.
+    """
+    if value is None:
+        return None
+
+    if '\0' in value:
+        value = value.replace('\0', '')
+    return value
 
 def _format_authors(authors: List[Dict[str, str]]) -> str:
     authors_formatted = []
