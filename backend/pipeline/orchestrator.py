@@ -79,20 +79,10 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
 
             elif step == "RankingSearchResults":
                 result = await step_function(hypothesis.content, result, top_n=10)
-
-                max_results = 6
-                threshold = 0.2
-                result = [
-                    item for item in result if item.get("similarity", 0) > threshold
-                ][:max_results]
-
-                citations = [
-                    (r.get("id"), r.get("apa_citation", "No citation available"))
-                    for r in result
-                    if "id" in r
-                ]
-
-                comment = f"Top results: {citations}" # pylint: disable=C0301
+                similarities = [item["similarity"] for item in result]
+                highest = round(max(similarities), 2)
+                lowest = round(min(similarities), 2)
+                comment = f"scores between {lowest} and {highest}." # pylint: disable=C0301
 
                 if DEBUG_MODE:
                     output_file = "../debug/ranked_results.json"
@@ -101,7 +91,13 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                         json.dump(result, f, ensure_ascii=False, indent=4)
 
             elif step == "SummarizingResults":
-                if not result:
+                max_results = 6
+                threshold = 0.2
+                filtered_results = [
+                    item for item in result if item.get("similarity", 0) > threshold
+                ][:max_results]
+
+                if not filtered_results:
                     hypothesis.status = "InsufficientSources"
                     db.commit()
                     return "No valid results above the threshold were found."

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import store from '@/store';
 import HomeView from '@/views/HomeView.vue';
 import ClaimsView from '@/views/ClaimsView.vue';
+import ArticleView from '@/views/ArticleView.vue';
 import LoginView from '@/components/LoginView.vue';
 import SignupView from '@/components/SignupView.vue';
 import RequestPasswordReset from '@/components/RequestPasswordReset.vue';
@@ -18,6 +19,13 @@ const routes = [
     path: '/claims/:id?',
     name: 'claims',
     component: ClaimsView,
+    props: true,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/articles/:id?',
+    name: 'articles',
+    component: ArticleView,
     props: true,
     meta: { requiresAuth: true },
   },

@@ -2,6 +2,7 @@ import re
 from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy_pagination import paginate
 from schemas import academic_works as work_schemas
 from db import models
 from core import utils
@@ -49,6 +50,36 @@ async def create_academic_work(
             models.AcademicWork.core_id == core_id
         ).first()
     return db_work
+
+def get_all_academic_works(db: Session, page: int, per_page: int) -> dict:
+    """
+    Retrieves academic works from the database with pagination.
+
+    Args:
+        db (Session): Database session.
+        page (int): The page number to retrieve.
+        per_page (int): The number of records per page.
+
+    Returns:
+        dict: A dictionary containing the current page, total pages, and the academic works.
+    """
+    query = db.query(models.AcademicWork)
+    paginated_result = paginate(query, page, per_page)
+    
+    return {
+        "total_pages": paginated_result.pages,
+        "total_items": paginated_result.total,
+        "current_page": page,
+        "items": paginated_result.items,
+    }
+
+def get_academic_work_by_id(db: Session, academic_work_id: str) -> Optional[models.AcademicWork]:
+    """
+    Fetches an academic work by their id.
+    """
+    return db.query(models.AcademicWork).filter(
+        models.AcademicWork.id == academic_work_id
+    ).first()
 
 def _remove_null_bytes(value: Optional[str]) -> Optional[str]:
     """

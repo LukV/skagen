@@ -41,7 +41,7 @@
                         <transition name="fade">
                             <div v-if="validation[0]?.classification"
                                  :class="getClassification(validation[0]?.classification).boxClass" 
-                                 class="custom-box text-caption pa-4"
+                                 class="custom-box pa-4"
                             >
                                 {{ getClassification(validation[0]?.classification).classification }}
                             </div>
@@ -49,7 +49,7 @@
                     </div>
                     <div v-else-if="claim.status === 'Pending' || claim.status === 'Processing'">
                         <transition name="fade">
-                            <div class="custom-box text-caption pa-4">
+                            <div class="custom-box pa-4">
                                 <v-icon size="small" color="on-primary">mdi-information-outline</v-icon>&nbsp;
                                 <div v-if="currentPipelineMessage"> 
                                     <i>
@@ -76,7 +76,7 @@
         </v-row>
 
         <v-row>
-            <v-col cols="12" md="10">
+            <v-col cols="12" md="11" xl="10">
                 <!-- Sources Section -->
                 <transition name="fade">
                     <div v-if="claim?.status === 'Completed'">
@@ -89,15 +89,27 @@
                                     :key="index"
                                     class="pa-4 me-4 mb-4"
                                     outlined
-                                    style="min-width: 250px; max-width: 250px;"
+                                    style="min-width: 300px; max-width: 300px;"
                             >
                                 <v-row no-gutters>
                                     <v-col cols="auto">
-                                        <div class="text-caption source-index">{{ index + 1 }}</div>
+                                        <div class="source-index text-caption mt-1">{{ index + 1 }}</div>
                                     </v-col>
                                     <v-col>
-                                        <p class="text-subtitle-2">{{ source.title }}</p>
-                                        <p class="text-caption text-secondary">{{ source.citation }}</p>
+                                        <p class="text-secondary">
+                                            {{ source.citation }}
+                                            <v-btn
+                                                icon
+                                                size="xs"
+                                                variant="plain"
+                                                color="primary"
+                                                :href="`/articles/${source.work_id}`"
+                                                rel="noopener"
+                                                style="text-transform:none !important; letter-spacing: 0 !important;"
+                                            >
+                                                View article
+                                            </v-btn>
+                                        </p>
                                     </v-col>
                                 </v-row>
                             </v-card>
@@ -219,7 +231,7 @@ export default {
                 this.pipelineQueue.push(data);
                 this.processPipelineQueue();
 
-                if (data.step === "SummarizingResults" && data.comment || data.step === "Completed" || data.step === "Failed") {
+                if (data.step === "EvaluatingHypothesis" && data.comment) {
                     this.fetchClaimData();
                     this.stopSSE();
                 }
