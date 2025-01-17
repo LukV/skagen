@@ -68,6 +68,9 @@ class AcademicWork(Base):
     title = Column(String, nullable=False)
     year_published = Column(String, nullable=True)
     llm_summary = Column(String, nullable=True)
+    llm_keywords = Column(String, nullable=True)
+    llm_phrase = Column(String, nullable=True)
+    llm_extended_summary = Column(String, nullable=True)
     date_created = Column(DateTime(timezone=True), server_default=func.now()) # pylint: disable=E1102
     date_updated = Column(DateTime(timezone=True), onupdate=func.now()) # pylint: disable=E1102
 

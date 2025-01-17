@@ -50,7 +50,7 @@ async def extract_topic_terms(text: str) -> dict:
     """
 
     response = client.chat.completions.create(
-        model="gpt-4",  # or "gpt-4o-mini", "gpt-3.5-turbo", etc.
+        model="gpt-4o",  # previously 'gpt-4'.
         messages=[
             {"role": "system", "content": "You are a concise, factual assistant."},
             {"role": "user", "content": prompt}
@@ -59,6 +59,10 @@ async def extract_topic_terms(text: str) -> dict:
     )
 
     content = response.choices[0].message.content
+    
+    # Strip the enclosing triple backticks if present
+    if content.startswith("```") and content.endswith("```"):
+        content = content.split("\n", 1)[-1].rsplit("\n", 1)[0]
 
     try:
         parsed = json.loads(content) # type: ignore

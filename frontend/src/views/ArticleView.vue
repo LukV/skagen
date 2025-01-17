@@ -42,11 +42,11 @@
               </div>
               <v-divider class="my-3"></v-divider>
               <p>
-                By: <strong>Bakshy, E., Messing, S., & Adamic, L. A.</strong>
+                By: <strong>{{ article?.authors_formatted }}</strong>
                 <br />
-                In: <strong>Science</strong>
+                In: <strong>{{ article?.publisher }}</strong>
                 <br />
-                Published: <strong>2015</strong>
+                Published: <strong>{{ article?.year_published }}</strong>
               </p>
           </v-col>
         </v-row>

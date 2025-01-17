@@ -66,7 +66,7 @@ async def _build_search_query_with_gpt(hypothesis: Hypothesis, max_length: int =
     )
 
     response = client.chat.completions.create(
-        model="gpt-4",  # or "gpt-4o-mini", "gpt-3.5-turbo", etc.
+        model="gpt-4o",  # or "gpt-4o-mini", "gpt-3.5-turbo", etc.
         messages=[
             {"role": "system", "content": "You are a concise, factual assistant."},
             {"role": "user", "content": prompt}
@@ -75,6 +75,7 @@ async def _build_search_query_with_gpt(hypothesis: Hypothesis, max_length: int =
     )
 
     query = response.choices[0].message.content
+    
     logger.info("[CORE] search query: %s", query)
 
     return query
