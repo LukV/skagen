@@ -4,7 +4,7 @@
             <v-col cols="12" md="8" lg="6">
                 <!-- Extracted Topics as Chips -->
                 <template v-if="isExtractingTopics">
-                    <v-chip class="me-2 mb-2 text-caption" rounded>
+                    <v-chip class="me-2 mb-4 text-caption" rounded>
                         <v-progress-circular indeterminate :size="10" :width="2" />&nbsp;Loading...
                     </v-chip>
                 </template>
@@ -14,7 +14,7 @@
                     <transition name="fade">
                         <div>
                             <v-chip v-for="(topic, index) in claim.extracted_topics" :key="index"
-                                class="me-2 mb-2 text-caption" rounded>
+                                class="me-2 mb-4 text-caption" rounded>
                                 {{ topic }}
                             </v-chip>
                         </div>
@@ -23,8 +23,8 @@
 
                 <!-- 3) Fallback if the pipeline is done (or in unknown state) but no topics found -->
                 <template v-else>
-                    <div class="text-caption">
-                        <i>No topics extracted.</i>
+                    <div class="text-caption font-weight-medium mb-1">
+                        CLAIM
                     </div>
                 </template>
 
@@ -248,6 +248,11 @@ export default {
                 // Update partial data or progress message
                 this.pipelineQueue.push(data);
                 this.processPipelineQueue();
+
+                if (data.step === "ExtractingTopics" && data.comment) {
+                    this.processExtractedTopics(data.comment);
+                    data.comment = '';
+                }
 
                 // If final SSE step arrives, do a final fetch
                 if (data.step === "EvaluatingHypothesis" && data.comment) {

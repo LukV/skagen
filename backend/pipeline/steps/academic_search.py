@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 from openai import OpenAI
 from crud.academic_works import create_academic_work
 from schemas.academic_works import AcademicWorkCreate, AcademicWorkResponse
-from fastapi.encoders import jsonable_encoder
 
 client = OpenAI()
 
@@ -21,28 +20,6 @@ logger = logging.getLogger(__name__)
 CORE_API_KEY = os.getenv("CORE_API_KEY")
 
 async def _build_search_query(hypothesis: Hypothesis, max_length: int = 80) -> str:
-    """
-    Builds a URL-encoded query string from extracted hypothesis data.
-    """
-    tokens = set(
-        (hypothesis.extracted_topics or [])
-        + (hypothesis.extracted_terms or [])
-        + (hypothesis.extracted_entities or [])
-    )
-
-    # Join with AND for more precise searching
-    raw_query = " AND ".join(tokens)
-
-    # Truncate if too long
-    if len(raw_query) > max_length:
-        raw_query = raw_query[:max_length]
-
-    # CORE queries often benefit from restricting to docs with abstracts
-    raw_query += " AND _exists_:description"
-
-    return urllib.parse.quote(raw_query)
-
-async def _build_search_query_with_gpt(hypothesis: Hypothesis, max_length: int = 80) -> str:
     """
     Refines a hypothesis into a search query string compatible with CORE API.
 
@@ -53,7 +30,7 @@ async def _build_search_query_with_gpt(hypothesis: Hypothesis, max_length: int =
     # Default to an empty list if entities are None
     extracted_entities = hypothesis.extracted_entities or []
 
-    # Prepare input for GPT-4
+    # Prepare input for GPT model
     prompt = (
         "Using the following inputs, generate a structured search query compatible with CORE API. "
         "Use logical operators like AND, OR, and parentheses for grouping. Prioritize combining "
@@ -75,7 +52,7 @@ async def _build_search_query_with_gpt(hypothesis: Hypothesis, max_length: int =
     )
 
     query = response.choices[0].message.content
-    
+
     logger.info("[CORE] search query: %s", query)
 
     return query
@@ -142,7 +119,7 @@ async def perform_academic_search(
     """
     High-level function to query the CORE API for open-access papers.
     """
-    query_str = await _build_search_query_with_gpt(hypothesis, max_length=80)
+    query_str = await _build_search_query(hypothesis, max_length=80)
     response_data = await _fetch_results(
         query_str,
         exclude_fulltext,

@@ -1,4 +1,5 @@
 import asyncio
+import json
 from concurrent.futures import ThreadPoolExecutor
 import logging
 from typing import Any, Dict, List
@@ -11,7 +12,7 @@ client = OpenAI()
 
 logger = logging.getLogger(__name__)
 
-async def _perform_llm_summarization(abstract: str) -> str:
+async def _perform_llm_summarization(abstract: str) -> dict:
     """
     Uses one LLM prompt to extract a summary for a research paper's abstract.
 
@@ -19,7 +20,11 @@ async def _perform_llm_summarization(abstract: str) -> str:
         abstract (str): The abstract text of the research paper.
 
     Returns:
-        str: The summarized content of the abstract.
+        dict: A JSON object containing the summary and key topics.
+        Format: {
+            "summary": str,
+            "topics": list[str]
+        }
     """
     try:
         response = client.chat.completions.create(
@@ -28,21 +33,37 @@ async def _perform_llm_summarization(abstract: str) -> str:
                 {
                     "role": "system",
                     "content": (
-                        "You are an AI research assistant tasked with "
-                        "summarizing an academic paper's abstract to 1 to 3 "
-                        "paragraphs, with a total length of 1200 to 1500 characters."
+                        "You are an AI research assistant tasked with summarizing"
+                        "an academic paper's abstract to 1 to 3 paragraphs (1200 "
+                        "to 1500 characters in total). Use markdown and seperate "
+                        "into paragraphs. Also, derive up to two key topics "
+                        "that encapsulate the main themes or concepts of the abstract. "
+                        "Respond in the format: \n"
+                        "{\"summary\": \"<summary>\", \"topics\": [\"<topic1>\", \"<topic2>\"]}" 
+
                     ),
                 },
                 {"role": "user", "content": abstract},
             ],
         )
-        return response.choices[0].message.content.strip()
-    
-    except OpenAIError as e:
+        content = response.choices[0].message.content
+
+        if content.startswith("```") and content.endswith("```"):
+            content = content.split("\n", 1)[-1].rsplit("\n", 1)[0]
+
+        parsed = json.loads(content)
+
+    except (OpenAIError, json.JSONDecodeError) as e:
         logger.error("Error during LLM summarization: %s", e)
-        raise RuntimeError("Failed to summarize the abstract due to an LLM error.") from e
+        # Fallback
+        parsed = {
+            "summary": e,
+            "topics": []
+        }
     
-def _get_existing_summary(session: Session, academic_work_id: str) -> str:
+    return parsed
+
+def _get_existing_completion(session: Session, academic_work_id: str) -> tuple:
     """
     Check if an LLM summary exists for a given AcademicWork ID in the database.
 
@@ -55,12 +76,12 @@ def _get_existing_summary(session: Session, academic_work_id: str) -> str:
     """
     try:
         academic_work = session.query(AcademicWork).filter_by(id=academic_work_id).first()
-        return academic_work.llm_summary if academic_work else None
+        return (academic_work.llm_summary, academic_work.llm_keywords) if academic_work else None
     except SQLAlchemyError as e:
         logger.error("Error checking llm_summary for ID %s: %s", academic_work_id, e)
         raise
 
-def _update_llm_summary(session: Session, academic_work_id: str, summary: str) -> None:
+def _update_llm_summary(session: Session, academic_work_id: str, completion: dict) -> None:
     """
     Update the llm_summary column for a given AcademicWork object.
 
@@ -75,7 +96,8 @@ def _update_llm_summary(session: Session, academic_work_id: str, summary: str) -
     try:
         academic_work = session.query(AcademicWork).filter_by(id=academic_work_id).first()
         if academic_work:
-            academic_work.llm_summary = summary
+            academic_work.llm_summary = completion["summary"]
+            academic_work.llm_keywords = completion["topics"]
             session.commit()
             logger.info("Updated llm_summary for AcademicWork ID: %s", academic_work_id)
         else:
@@ -104,41 +126,45 @@ async def summarize_abstracts(
 
     for result in search_results:
         title = result.get("title", "No title available")
-        abstract = result.get("abstract", "")
+        abstract = result.get("abstract") or result.get("fullText", "")
         academic_work_id = result.get("id")
 
         if not abstract or not academic_work_id:
-            logger.warning("Skipping result with missing abstract or ID: %s", result)
+            logger.warning("Skipping result with missing abstract or ID: %s", title)
             continue
 
         combined_text = f"{title}\n{abstract}"
         logger.info("Processing abstract for paper: %s", title)
 
         # Check for existing summary in the database
-        existing_summary = _get_existing_summary(session, academic_work_id)
-        if existing_summary:
+        existing_completion = _get_existing_completion(session, academic_work_id)
+        if existing_completion and all(existing_completion):
             logger.info("Using existing summary for AcademicWork ID: %s", academic_work_id)
-            summaries_map[academic_work_id] = existing_summary
+            summaries_map[academic_work_id] = {
+                "summary": existing_completion[0],  # llm_summary
+                "topics": existing_completion[1],   # llm_keywords
+            }
         else:
             try:
                 # Perform LLM summarization
-                summary = await _perform_llm_summarization(combined_text)
-                summaries_map[academic_work_id] = summary
+                completion = await _perform_llm_summarization(combined_text)
+                summaries_map[academic_work_id] = completion
 
                 # Update the summary in the database using ThreadPoolExecutor
                 with ThreadPoolExecutor() as executor:
                     await asyncio.get_running_loop().run_in_executor(
-                        executor, _update_llm_summary, session, academic_work_id, summary
+                        executor, _update_llm_summary, session, academic_work_id, completion
                     )
             except (RuntimeError, SQLAlchemyError, OpenAIError) as e:
-                logger.error("Failed to summarize or update AcademicWork ID %s: %s", academic_work_id, e)
+                logger.error("Failed to summarize or update \
+                             AcademicWork ID %s: %s", academic_work_id, e)
 
     # Enrich search_results with summaries
     for result in search_results:
         academic_work_id = result.get("id")
         if academic_work_id in summaries_map:
-            result["summary"] = summaries_map[academic_work_id]
+            result["summary"] = summaries_map[academic_work_id]["summary"]
+            result["keywords"] = summaries_map[academic_work_id]["topics"]
 
     return search_results
-
 

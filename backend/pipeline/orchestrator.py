@@ -65,8 +65,9 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                 hypothesis.extracted_terms = result["keywords"]
                 hypothesis.extracted_entities = result["named_entities"]
                 hypothesis.query_type = result["query_type"]
+                db.commit()
                 comment = f"Extracted topics: {hypothesis.extracted_topics}"
-
+                
                 # Check if query type is supported
                 if hypothesis.query_type != "research-based":
                     hypothesis.status = "Skipped"
@@ -103,7 +104,7 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                     return "No valid results above the threshold were found."
 
                 result = await step_function(result, db)
-                comment = "Summarization successful."
+                comment = " successful."
 
             elif step == "EvaluatingHypothesis":
                 result = await step_function(result, hypothesis)
@@ -119,7 +120,7 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                 db.commit()
                 db.refresh(validation_result)
 
-                comment="Evaluation successful."
+                comment=" successful."
 
             # Publish result after executing the step
             await redis_client.publish(

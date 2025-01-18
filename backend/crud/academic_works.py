@@ -65,7 +65,7 @@ def get_all_academic_works(db: Session, page: int, per_page: int) -> dict:
     """
     query = db.query(models.AcademicWork)
     paginated_result = paginate(query, page, per_page)
-    
+
     return {
         "total_pages": paginated_result.pages,
         "total_items": paginated_result.total,
@@ -121,7 +121,13 @@ def _format_authors(authors: List[Dict[str, str]]) -> str:
 
         authors_formatted.append(formatted_name)
 
-    return ", ".join(authors_formatted) if authors_formatted else "No listed authors"
+    formatted_authors = ", ".join(authors_formatted) if authors_formatted else "No listed authors"
+
+    # Truncate to max length of 150 characters
+    if len(formatted_authors) > 150:
+        return formatted_authors[:147] + "..."
+
+    return formatted_authors
 
 def _format_year(published_date: str) -> str:
     year = "n.d."
