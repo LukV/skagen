@@ -51,7 +51,7 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
             or contradictory.\n"
         "   - `[C] Inconclusive`: Evidence is neutral or conflicting.\n"
         "   - `[D] Refuted`: Evidence disagrees with the hypothesis.\n\n"
-        "2. **Motivation**: Provide a concise explanation for the classification.:\n"
+        "2. **Motivation**: Provide a concise explanation on your for the classification.:\n"
         "   - Brief summary of the overall findings.\n"
         "   - Per paper a list item including citation:\n"
         "     - Citation: Supports the hypothesis by showing evidence of...\n"
@@ -75,27 +75,25 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
 
 async def _perform_llm_summarization(prompt: str) -> Dict[str, Any]:
     """
-    Uses one LLM prompt to extract:
-      1) label
-      2) summary
-      3) motivation
-    Returns a dict.
+    Uses one LLM prompt to extract an evaluation based on an 
+    input prompt.
     """
     response = client.chat.completions.create(
-        model="gpt-4",  # or "gpt-4o-mini", "gpt-3.5-turbo", etc.
+        model="gpt-4o",  # or "gpt-4o-mini", "gpt-3.5-turbo", etc.
         messages=[
             {
                 "role": "system", 
-                "content": "You are an AI research assistant tasked with \
-                    summarizing academic search results for a user's \
-                        hypothesis."},
+                "content": "You are concise, factual assistant tasked with \
+                    evaluating academic search results to support or refute \
+                         a user'shypothesis."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.0  # lower temperature => less creativity, more accuracy
     )
 
     content = response.choices[0].message.content
-    print(content)
+    if content.startswith("```") and content.endswith("```"):
+        content = content.split("\n", 1)[-1].rsplit("\n", 1)[0]
 
     try:
         # Handle extra braces
@@ -117,8 +115,7 @@ async def _perform_llm_summarization(prompt: str) -> Dict[str, Any]:
         # Fallback if the LLM output isn't valid JSON
         parsed = {
             "classification": "error",
-            "motivation": f"Internal error: {e}",
-            "sources": []
+            "motivation": f"Internal error: {e}"
         }
 
     return parsed
@@ -135,8 +132,7 @@ async def evaluate_hypothesis(
         logger.warning("No search results provided to summarization step.")
         return {
             "classification": "no_data",
-            "motivation": "No papers were provided.",
-            "sources": []
+            "motivation": "No papers were provided."
         }
 
     prompt = await _prepare_prompt(hypothesis.content, search_results)
@@ -159,6 +155,5 @@ async def evaluate_hypothesis(
         logger.error("Error summarizing results: %s", str(e))
         return {
             "classification": "error",
-            "motivation": f"Internal error: {e}",
-            "sources": []
+            "motivation": f"Internal error: {e}"
         }

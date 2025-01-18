@@ -23,7 +23,7 @@ async def _perform_llm_summarization(abstract: str) -> str:
     """
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=[
                 {
                     "role": "system",
@@ -37,6 +37,7 @@ async def _perform_llm_summarization(abstract: str) -> str:
             ],
         )
         return response.choices[0].message.content.strip()
+    
     except OpenAIError as e:
         logger.error("Error during LLM summarization: %s", e)
         raise RuntimeError("Failed to summarize the abstract due to an LLM error.") from e

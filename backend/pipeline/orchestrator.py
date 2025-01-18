@@ -93,11 +93,11 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
             elif step == "SummarizingResults":
                 max_results = 6
                 threshold = 0.2
-                filtered_results = [
+                result = [
                     item for item in result if item.get("similarity", 0) > threshold
                 ][:max_results]
 
-                if not filtered_results:
+                if not result:
                     hypothesis.status = "InsufficientSources"
                     db.commit()
                     return "No valid results above the threshold were found."

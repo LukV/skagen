@@ -3,24 +3,30 @@
         <v-row>
             <v-col cols="12" md="8" lg="6">
                 <!-- Extracted Topics as Chips -->
-                <div class="extracted-topics mb-2">
-                    <template v-if="isExtractingTopics">
-                        <v-chip class="me-2 mb-2 text-caption" rounded><v-progress-circular indeterminate :size="10" :width="2"></v-progress-circular>&nbsp;Loading...</v-chip>                        
-                    </template>
-                    <template v-else>
-                        <transition name="fade">
-                            <div>
-                                <v-chip v-for="(topic, index) in claim?.extracted_topics" 
-                                        :key="index" 
-                                        class="me-2 mb-2 text-caption" 
-                                        rounded
-                                >
-                                    {{ topic }}
-                                </v-chip>
-                            </div>
-                        </transition>
-                    </template>
-                </div>
+                <template v-if="isExtractingTopics">
+                    <v-chip class="me-2 mb-2 text-caption" rounded>
+                        <v-progress-circular indeterminate :size="10" :width="2" />&nbsp;Loading...
+                    </v-chip>
+                </template>
+
+                <!-- 2) If we do have topics, show them -->
+                <template v-else-if="hasExtractedTopics">
+                    <transition name="fade">
+                        <div>
+                            <v-chip v-for="(topic, index) in claim.extracted_topics" :key="index"
+                                class="me-2 mb-2 text-caption" rounded>
+                                {{ topic }}
+                            </v-chip>
+                        </div>
+                    </transition>
+                </template>
+
+                <!-- 3) Fallback if the pipeline is done (or in unknown state) but no topics found -->
+                <template v-else>
+                    <div class="text-caption">
+                        <i>No topics extracted.</i>
+                    </div>
+                </template>
 
                 <!-- Title -->
                 <div>
@@ -35,23 +41,25 @@
                     </transition>
                 </div>
 
+                <!-- Classification/Status Box -->
                 <div v-if="claim?.status">
-                    <!-- Classification -->
-                    <div v-if="claim.status === 'Completed'">
+                    <!-- If the claim is completed, show classification -->
+                    <div v-if="claimState === 'COMPLETED'">
                         <transition name="fade">
                             <div v-if="validation[0]?.classification"
-                                 :class="getClassification(validation[0]?.classification).boxClass" 
-                                 class="custom-box pa-4"
-                            >
+                                :class="getClassification(validation[0]?.classification).boxClass"
+                                class="custom-box pa-4">
                                 {{ getClassification(validation[0]?.classification).classification }}
                             </div>
                         </transition>
                     </div>
-                    <div v-else-if="claim.status === 'Pending' || claim.status === 'Processing'">
+
+                    <!-- If the claim is in progress (pending/processing), show pipeline messages -->
+                    <div v-else-if="claimState === 'IN_PROGRESS'">
                         <transition name="fade">
                             <div class="custom-box pa-4">
                                 <v-icon size="small" color="on-primary">mdi-information-outline</v-icon>&nbsp;
-                                <div v-if="currentPipelineMessage"> 
+                                <div v-if="currentPipelineMessage">
                                     <i>
                                         {{ currentPipelineMessage.title }}
                                         <span v-if="currentPipelineMessage.comment">
@@ -63,9 +71,10 @@
                                     <i class="thinking-label">Thinking...</i>
                                 </div>
                             </div>
-                        </transition>                        
+                        </transition>
                     </div>
-                    <!-- Otherwise show a warning. -->
+
+                    <!-- Otherwise show a warning if the status is not recognized -->
                     <div v-else>
                         <v-alert type="warning" class="mt-4">
                             Validation could not be completed: {{ claim.status }}
@@ -77,36 +86,28 @@
 
         <v-row>
             <v-col cols="12" md="11" xl="10">
-                <!-- Sources Section -->
+                <!-- Sources Section (only if completed) -->
                 <transition name="fade">
-                    <div v-if="claim?.status === 'Completed'">
+                    <div v-if="claimState === 'COMPLETED'">
                         <h4 class="text-h8 mb-2">
                             <v-icon size="small">mdi-text</v-icon>
                             Sources
                         </h4>
                         <div class="d-flex flex-row overflow-auto source-scroller">
-                            <v-card v-for="(source, index) in validation[0]?.sources"
-                                    :key="index"
-                                    class="pa-4 me-4 mb-4"
-                                    outlined
-                                    style="min-width: 300px; max-width: 300px;"
-                            >
+                            <v-card v-for="(source, index) in validation[0]?.sources" :key="index"
+                                class="pa-4 me-4 mb-4" outlined style="min-width: 300px; max-width: 300px;">
                                 <v-row no-gutters>
                                     <v-col cols="auto">
-                                        <div class="source-index text-caption mt-1">{{ index + 1 }}</div>
+                                        <div class="source-index text-caption mt-1">
+                                            {{ index + 1 }}
+                                        </div>
                                     </v-col>
                                     <v-col>
                                         <p class="text-secondary">
                                             {{ source.citation }}
-                                            <v-btn
-                                                icon
-                                                size="xs"
-                                                variant="plain"
-                                                color="primary"
-                                                :href="`/articles/${source.work_id}`"
-                                                rel="noopener"
-                                                style="text-transform:none !important; letter-spacing: 0 !important;"
-                                            >
+                                            <v-btn icon size="xs" variant="plain" color="primary"
+                                                :href="`/articles/${source.work_id}`" rel="noopener"
+                                                style="text-transform:none !important; letter-spacing: 0 !important;">
                                                 View article
                                             </v-btn>
                                         </p>
@@ -119,16 +120,11 @@
 
                 <!-- Claim balloon -->
                 <transition name="fade">
-                    <div v-if="claim?.status === 'Completed'" class="mt-8 claim-balloon">
+                    <div v-if="claimState === 'COMPLETED'" class="mt-8 claim-balloon">
                         <v-row class="d-flex justify-end">
                             <v-col cols="auto">
-                                <v-sheet
-                                    rounded="xl"
-                                    class="mx-auto pa-4"
-                                    color="secondary"
-                                    :min-width="200"
-                                    :max-width="450"
-                                >
+                                <v-sheet rounded="xl" class="mx-auto pa-4" color="secondary" :min-width="200"
+                                    :max-width="450">
                                     {{ claim?.content }}
                                 </v-sheet>
                             </v-col>
@@ -136,9 +132,9 @@
                     </div>
                 </transition>
 
-                <!-- Summary -->
+                <!-- Summary (only if completed) -->
                 <transition name="fade">
-                    <div v-if="claim?.status === 'Completed'" class="mt-8">
+                    <div v-if="claimState === 'COMPLETED'" class="mt-8">
                         <v-row>
                             <v-col cols="auto">
                                 <div class="logo-container">
@@ -178,25 +174,49 @@ export default {
             pipelineQueue: [],
             currentPipelineMessage: null,
             isProcessingQueue: false,
-            displayDuration: 3000, 
-            isExtractingTopics: true,
+            displayDuration: 3000,
         };
     },
+
+    computed: {
+        claimState() {
+            if (!this.claim || this.claim.status === "Loading...") return "LOADING";
+            if (["Pending", "Processing"].includes(this.claim.status)) return "IN_PROGRESS";
+            if (this.claim.status === "Completed") return "COMPLETED";
+            return "UNKNOWN";
+        },
+        hasExtractedTopics() {
+            return (
+                this.claim?.extracted_topics &&
+                this.claim.extracted_topics.length > 0
+            );
+        },
+        isExtractingTopics() {
+            // If we’re in progress and no topics yet, we show spinner
+            return (
+                this.claimState === "IN_PROGRESS" &&
+                !this.hasExtractedTopics
+            );
+        },
+    },
+
     methods: {
         async fetchClaimData() {
             try {
                 const claimResponse = await apiClient.get(`/claims/${this.id}`);
                 this.claim = { ...this.claim, ...claimResponse.data };
 
+                // Based on the claim’s status, either start SSE, trigger the pipeline,
+                // or fetch validations if already completed
                 if (this.claim.status === "Pending") {
                     await this.triggerValidationPipeline();
                 } else if (this.claim.status === "Processing") {
                     this.startSSE();
                 } else if (this.claim.status === "Completed") {
-                    this.isExtractingTopics = false;
                     await this.fetchValidations();
-                } 
+                }
                 // Handle other statuses if needed (Failed, Skipped, etc.)
+
             } catch (error) {
                 console.error("Error fetching claim data:", error);
             }
@@ -205,7 +225,9 @@ export default {
         async triggerValidationPipeline() {
             try {
                 this.startSSE();
+                // Trigger the pipeline on the server
                 await apiClient.post(`/claims/${this.id}/validations`);
+                // We can locally mark it as "Processing" for UI
                 this.claim.status = "Processing";
             } catch (error) {
                 console.error("Error starting validation pipeline:", error);
@@ -214,26 +236,25 @@ export default {
 
         startSSE() {
             this.stopSSE();
-
             const sseUrl = `${apiClient.defaults.baseURL}/sse/progress/${this.id}`;
             this.sseSource = new EventSource(sseUrl);
 
-            this.sseSource.onmessage = (event) => {
+            // Make onmessage async so we can `await this.fetchClaimData()`
+            this.sseSource.onmessage = async (event) => {
                 const data = JSON.parse(event.data);
 
                 if (data.id !== this.id) return; // ignore others
 
-                if (data.step === "ExtractingTopics" && data.comment) {
-                    this.processExtractedTopics(data.comment);
-                    data.comment = null;
-                }
-
+                // Update partial data or progress message
                 this.pipelineQueue.push(data);
                 this.processPipelineQueue();
 
+                // If final SSE step arrives, do a final fetch
                 if (data.step === "EvaluatingHypothesis" && data.comment) {
-                    this.fetchClaimData();
+                    // The pipeline is finished. 
                     this.stopSSE();
+                    // **Re-fetch** so the claim now has the final topics
+                    await this.fetchClaimData();
                 }
             };
 
@@ -243,21 +264,25 @@ export default {
             };
         },
 
+        stopSSE() {
+            if (this.sseSource) {
+                this.sseSource.close();
+                this.sseSource = null;
+            }
+        },
+
         processExtractedTopics(comment) {
             const match = comment.match(/Extracted topics: \[(.*?)\]/);
             if (match) {
                 const topics = match[1]
                     .split(",")
-                    .map((topic) => topic.trim().replace(/^'|'$/g, ""));
+                    .map((topic) =>
+                        topic
+                            .trim()
+                            .replace(/^'|'$/g, "") // remove surrounding single quotes
+                            .replace(/\b\w/g, (char) => char.toUpperCase()) // capitalize each word
+                    );
                 this.claim.extracted_topics = topics;
-            }
-            this.isExtractingTopics = false;
-        },
-
-        stopSSE() {
-            if (this.sseSource) {
-                this.sseSource.close();
-                this.sseSource = null;
             }
         },
 
@@ -267,18 +292,17 @@ export default {
 
             const displayNext = () => {
                 if (!this.pipelineQueue.length) {
-                    // No more messages => done
                     this.isProcessingQueue = false;
                     this.currentPipelineMessage = null;
                     return;
                 }
-                // Take next message from the queue
+                // Take the next message
                 this.currentPipelineMessage = this.pipelineQueue.shift();
 
                 // Display it for `displayDuration` ms
                 setTimeout(() => {
                     this.currentPipelineMessage = null;
-                    displayNext(); 
+                    displayNext();
                 }, this.displayDuration);
             };
 
@@ -298,9 +322,9 @@ export default {
             if (!date) return "";
             const now = new Date();
             const givenDate = new Date(date);
-            const diffInMilliseconds = now - givenDate;
-            const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
-            const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60));
+            const diffInMs = now - givenDate;
+            const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+            const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
             const isSameDay = now.toDateString() === givenDate.toDateString();
 
             if (diffInMinutes < 5) {
@@ -330,7 +354,8 @@ export default {
                 case "B":
                     return {
                         boxClass: "blue-box",
-                        classification: "Partially Supported: Some evidence agrees; others are neutral or contradictory.",
+                        classification:
+                            "Partially Supported: Some evidence agrees; others are neutral or contradictory.",
                     };
                 case "C":
                     return {
@@ -350,22 +375,23 @@ export default {
             }
         },
     },
+
     created() {
+        // If user navigated with some local claimContent
         const claimContent = this.$router.options.history.state?.claimContent;
         if (claimContent) {
             this.claim = { content: claimContent, status: "Loading..." };
         }
         this.fetchClaimData();
     },
+
     beforeUnmount() {
-        // Stop any SSE connection
         this.stopSSE();
     },
 };
 </script>
 
 <style scoped>
-
 .custom-box {
     border-left: 8px solid rgb(var(--v-theme-primary));
     border-radius: 4px;
@@ -423,29 +449,36 @@ export default {
     margin-right: 8px;
 }
 
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
 }
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
 }
-.fade-enter-to, .fade-leave-from {
-  opacity: 1;
+
+.fade-enter-to,
+.fade-leave-from {
+    opacity: 1;
 }
 
 .thinking-label {
-  animation: pulse 1.5s infinite ease-in-out;
+    animation: pulse 1.5s infinite ease-in-out;
 }
 
-/* Define the animation */
 @keyframes pulse {
-  0%, 100% {
-    opacity: 0.7;
-    filter: brightness(100%);
-  }
-  50% {
-    opacity: 1;
-    filter: brightness(120%);
-  }
+
+    0%,
+    100% {
+        opacity: 0.7;
+        filter: brightness(100%);
+    }
+
+    50% {
+        opacity: 1;
+        filter: brightness(120%);
+    }
 }
 </style>
