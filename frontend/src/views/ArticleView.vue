@@ -4,11 +4,14 @@
       <v-col cols="12">
         <!-- Title Section -->
         <v-chip-group class="mt-4">
-          <v-chip rounded>
-            News media
-          </v-chip>
-          <v-chip rounded>
-            Hustlers
+          <v-chip
+            v-for="(keyword, index) in parsedKeywords"
+            :key="index"
+            rounded
+            color="primary"
+            class="ma-1"
+          >
+            {{ keyword }}
           </v-chip>
         </v-chip-group>
         <h2 class="text-h4 mt-6 mb-12 font-weight-normal">
@@ -84,7 +87,7 @@
                   <v-btn key="4" size="small" class="ma-1" icon="mdi-bookmark"></v-btn>
               </v-col>
               <v-col cols="12" md="11">
-                {{ article?.llm_summary }}
+                <MarkdownRenderer :markdown="article?.llm_summary || 'No content available.'" />
               </v-col>
             </v-row>
           </v-tabs-window-item>
@@ -97,15 +100,20 @@
 <script>
 import axios from "axios";
 import apiClient from "@/utils/apiClient";
+import MarkdownRenderer from "@/components/MarkdownRenderer.vue";
+
 
 export default {
   name: "ArticleView",
-  props: {
-      id: {
-          type: String,
-          required: true,
-      },
+  components: {
+        MarkdownRenderer,
   },
+  props: {
+    id: {
+        type: String,
+        required: true,
+    },
+},
   data() {
     return {
       // Placeholder for fetched data from API
@@ -119,21 +127,43 @@ export default {
   },
   mounted() {
     this.fetchArticleData();
-    this.fetchUnsplashImage();
+  },
+  computed: {
+    parsedKeywords() {
+      if (!this.article?.llm_keywords) return [];
+      try {
+        // Remove curly braces and split by commas
+        const keywords = this.article.llm_keywords
+          .replace(/{|}/g, "") // Remove the curly braces
+          .split(",") // Split the string into an array
+          .map((keyword) => keyword.trim().replace(/^"|"$/g, "")); // Trim and remove quotes
+        return keywords;
+      } catch (error) {
+        console.error("Error parsing llm_keywords:", error);
+        return [];
+      }
+    },
   },
   methods: {
     async fetchArticleData() {
       try {
           const worksResponse = await apiClient.get(`/works/${this.id}`);
           this.article = worksResponse.data;
+
+          if (this.parsedKeywords.length > 0) {
+            this.fetchUnsplashImage();
+          } else {
+            console.warn("No keywords available for Unsplash query.");
+          }
       } catch (error) {
           console.error("Error fetching article data:", error);
       }
     },
 
     async fetchUnsplashImage() {
+      console.log(this.parsedKeywords[0]);
       const ACCESS_KEY = "868xzuHP2hq46VZlNfkov2cUrpAYYZ8-LTzUCVzU2Kw"; // Replace with your Unsplash Access Key
-      const query = "Green area";
+      const query = this.parsedKeywords[0];
       const maxWidth = 400; // Maximum width
       const maxHeight = 300; // Maximum height
 
@@ -150,7 +180,7 @@ export default {
 
         if (response.data.results.length > 0) {
           const image = response.data.results[0];
-          this.imageUrl = `${image.urls.raw}&w=${maxWidth}&h=${maxHeight}&fit=clip`;
+          this.imageUrl = `${image.urls.raw}&w=${maxWidth}&h=${maxHeight}&fit=crop`;
           this.imageAlt = image.alt_description || "Urban development";
           this.imageCredit = {
             name: image.user.name,

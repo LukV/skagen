@@ -33,4 +33,8 @@ export default {
     list-style-type: disc;
     padding-left: 10px !important;
 }
+
+.my-md p {
+    margin-bottom: 12px;
+}
 </style>

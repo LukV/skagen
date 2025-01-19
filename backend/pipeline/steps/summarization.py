@@ -35,11 +35,13 @@ async def _perform_llm_summarization(abstract: str) -> dict:
                     "content": (
                         "You are an AI research assistant tasked with summarizing"
                         "an academic paper's abstract to 1 to 3 paragraphs (1200 "
-                        "to 1500 characters in total). Use markdown and seperate "
+                        "to 1500 characters in total). Use Markdown and seperate "
                         "into paragraphs. Also, derive up to two key topics "
                         "that encapsulate the main themes or concepts of the abstract. "
                         "Respond in the format: \n"
-                        "{\"summary\": \"<summary>\", \"topics\": [\"<topic1>\", \"<topic2>\"]}" 
+                        "{\"summary\": \"<summary in Markdown format>\", \
+                            \"topics\": [\"<topic1>\", \"<topic2>\"]}"
+                        "Please use valid JSON, and Markdown for the summary." 
 
                     ),
                 },
