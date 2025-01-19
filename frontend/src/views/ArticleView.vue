@@ -38,10 +38,8 @@
           </v-col>
 
           <v-col cols="12" md="6">
-              <div class="font-italic mb-2">
-                "The hustle culture worships toil as an idol. But what is your why? Create not from exhaustion but from
-                will to
-                power—let your work affirm life, not enslave it." #Nietzsche #HustleCulture
+              <div class="mb-2">
+                {{ article?.llm_phrase }}
               </div>
               <v-divider class="my-3"></v-divider>
               <p>
@@ -66,7 +64,7 @@
         </v-tabs>
 
         <v-tabs-window v-model="tab">
-          <v-tabs-window-item v-for="n in 3" :key="n" :value="n">
+          <v-tabs-window-item :value="1">
             <v-row>
               <v-col cols="12">
                 <span class="text-caption mt-1 mr-2">2 min read</span>
@@ -88,6 +86,74 @@
               </v-col>
               <v-col cols="12" md="11">
                 <MarkdownRenderer :markdown="article?.llm_summary || 'No content available.'" />
+              </v-col>
+            </v-row>
+          </v-tabs-window-item>
+          <v-tabs-window-item :value="2">
+            Under construction
+          </v-tabs-window-item>
+          <v-tabs-window-item :value="3">
+            <v-row>
+              <!-- Explanation Section -->
+              <v-col cols="12" sm="5">
+                <v-card outlined class="pa-4" variant="text">
+                  <v-card-text>
+                    <h3 class="text-h6 font-weight-bold mb-4">Open access to research</h3>
+                    <p class="mb-4">
+                      The display and download links will take you to our partner's site. 
+                      CORE is a global open-access platform for academic research articles. 
+                      It aggregates research outputs from repositories and journals, providing 
+                      free access to millions of scholarly articles to support knowledge sharing 
+                      and collaboration.
+                    </p>
+                    <p>
+                      Use the "Display" button to view the full article on the CORE
+                      website, or the "Download" button to get a copy of the article in PDF format.
+                    </p>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <!-- Buttons Section -->
+              <v-col cols="12" sm="7">
+                <v-card outlined class="pa-4">
+                  <v-card-text>
+                    <h3 class="text-h6 font-weight-bold mb-4">Access the full article</h3>
+                    <p class="mb-2">
+                      Below are two options for accessing the article:
+                    </p>
+                    <ul style="margin-left:10px">
+                      <li class="mb-2">
+                        <strong>Display Full Article</strong>: Opens the article in your
+                        browser on CORE's platform.
+                      </li>
+                      <li class="mb-6">
+                        <strong>Download Full Article</strong>: Downloads a PDF copy of
+                        the article directly to your device.
+                      </li>
+                    </ul>
+                    <v-btn
+                      :href="getLink('display')"
+                      target="_blank"
+                      color="primary"
+                      class="my-6"
+                      prepend-icon="mdi-eye"
+                      block
+                    >
+                      Display Full Article
+                    </v-btn>
+                    <v-btn
+                      :href="getLink('download')"
+                      target="_blank"
+                      color="success"
+                      class="my-6"
+                      prepend-icon="mdi-download"
+                      block
+                    >
+                      Download Full Article
+                    </v-btn>
+                  </v-card-text>
+                </v-card>
               </v-col>
             </v-row>
           </v-tabs-window-item>
@@ -160,12 +226,16 @@ export default {
       }
     },
 
+    getLink(type) {
+      return this.article?.links?.find((link) => link.type === type)?.url || "#";
+    },
+
     async fetchUnsplashImage() {
       console.log(this.parsedKeywords[0]);
-      const ACCESS_KEY = "868xzuHP2hq46VZlNfkov2cUrpAYYZ8-LTzUCVzU2Kw"; // Replace with your Unsplash Access Key
+      const ACCESS_KEY = "868xzuHP2hq46VZlNfkov2cUrpAYYZ8-LTzUCVzU2Kw"; 
       const query = this.parsedKeywords[0];
-      const maxWidth = 400; // Maximum width
-      const maxHeight = 300; // Maximum height
+      const maxWidth = 400; // 4:3 aspect ratio
+      const maxHeight = 300;
 
       try {
         const response = await axios.get("https://api.unsplash.com/search/photos", {

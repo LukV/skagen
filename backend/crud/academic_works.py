@@ -21,6 +21,13 @@ async def create_academic_work(
     abstract = _remove_null_bytes(work.abstract)
     authors = [{"name": getattr(author, "name", author)} for author in work.authors]
     authors_formatted = _format_authors(authors)
+    links = [
+        {
+            "type": getattr(link, "type", None),
+            "url": getattr(link, "url", None),
+        }
+        for link in work.links
+    ]
     year_published = work.year_published or _format_year(work.published_date)
     publisher = _remove_null_bytes(work.publisher)
     pub_str = f"{publisher}." if publisher else ""
@@ -33,6 +40,7 @@ async def create_academic_work(
         apa_citation = apa_citation,
         authors = authors,
         authors_formatted = authors_formatted,
+        links = links,
         core_id = core_id,
         full_text = full_text,
         published_date = work.published_date,

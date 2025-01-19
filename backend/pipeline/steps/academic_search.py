@@ -3,7 +3,6 @@ import logging
 import os
 import time
 from typing import List, Dict, Optional
-import urllib.parse
 from datetime import datetime, timezone
 import httpx
 import dateutil.parser
@@ -143,6 +142,7 @@ async def perform_academic_search(
         academic_work = AcademicWorkCreate(
             abstract=item.get("abstract") or item.get("description", ""),
             authors=item.get("authors", []),
+            links=item.get("links", []),
             core_id=str(item.get("id")),
             full_text=item.get("fullText", ""),
             published_date=item.get("publishedDate", ""),
@@ -150,6 +150,17 @@ async def perform_academic_search(
             title=title,
             year_published=str(item.get("yearPublished")) or None
         )
+
+        # display_url = ""
+        # links = record.get("links", [])
+        # for link in links:
+        #     if link.get("type") == "display":
+        #         display_url = link.get("url", "")
+        #         break
+
+        # if not display_url:
+        #     # If we have a "downloadUrl" or something else, we could use it
+        #     display_url = record.get("downloadUrl", "")
 
         # Create the academic work in the database
         created_work = await create_academic_work(db, academic_work)

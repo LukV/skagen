@@ -5,12 +5,19 @@ from pydantic import BaseModel, ConfigDict, Field
 class Author(BaseModel):
     name: str = Field(..., description="The full name of the author.")
 
+class Link(BaseModel):
+    type: str = Field(..., description="The type of the link (e.g., download, reader, thumbnail).")
+    url: str = Field(..., description="The URL of the link.")
+
 class AcademicWorkCreate(BaseModel):
     abstract: Optional[str] = Field(
         None, description="The abstract of the academic work."
     )
     authors: Optional[List[Author]] = Field(
         None, description="A list of authors for the academic work, each with a name field."
+    )
+    links: Optional[List[Link]] = Field(
+        None, description="A list of links to view or download the work."
     )
     core_id: str = Field(
         ..., description="The unique core ID associated with the academic work."
@@ -43,6 +50,9 @@ class AcademicWorkResponse(BaseModel):
     )
     authors: Optional[List[Author]] = Field(
         None, description="A list of authors for the academic work, each with a name field."
+    )
+    links: Optional[List[Link]] = Field(
+        None, description="A list of links to view or download the work."
     )
     authors_formatted: Optional[str] = Field(
         None, description="Formatted string of authors' names for display."

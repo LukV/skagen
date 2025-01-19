@@ -33,13 +33,16 @@ async def _perform_llm_summarization(abstract: str) -> dict:
                 {
                     "role": "system",
                     "content": (
-                        "You are an AI research assistant tasked with summarizing"
-                        "an academic paper's abstract to 1 to 3 paragraphs (1200 "
-                        "to 1500 characters in total). Use Markdown and seperate "
-                        "into paragraphs. Also, derive up to two key topics "
-                        "that encapsulate the main themes or concepts of the abstract. "
+                        "You are an AI research assistant tasked with three tasks: "
+                        "1/ with summarizing an academic paper's abstract to 1 to 3 "
+                        "paragraphs (1200 to 1500 characters in total). Use Markdown "
+                        "to format the summary and seperate into paragraphs." 
+                        "2/ From that derive a 200 character introductory paragraph summary. "
+                        "3/ Derive up to two key topics that encapsulate the main "
+                        "themes or concepts of the abstract. "
                         "Respond in the format: \n"
                         "{\"summary\": \"<summary in Markdown format>\", \
+                            \"phrase\": \"<phrase>\", \
                             \"topics\": [\"<topic1>\", \"<topic2>\"]}"
                         "Please use valid JSON, and Markdown for the summary." 
 
@@ -60,6 +63,7 @@ async def _perform_llm_summarization(abstract: str) -> dict:
         # Fallback
         parsed = {
             "summary": e,
+            "phase": "",
             "topics": []
         }
     
@@ -78,7 +82,11 @@ def _get_existing_completion(session: Session, academic_work_id: str) -> tuple:
     """
     try:
         academic_work = session.query(AcademicWork).filter_by(id=academic_work_id).first()
-        return (academic_work.llm_summary, academic_work.llm_keywords) if academic_work else None
+        return (
+            academic_work.llm_summary,
+            academic_work.llm_phrase,
+            academic_work.llm_keywords
+        ) if academic_work else None
     except SQLAlchemyError as e:
         logger.error("Error checking llm_summary for ID %s: %s", academic_work_id, e)
         raise
@@ -99,6 +107,7 @@ def _update_llm_summary(session: Session, academic_work_id: str, completion: dic
         academic_work = session.query(AcademicWork).filter_by(id=academic_work_id).first()
         if academic_work:
             academic_work.llm_summary = completion["summary"]
+            academic_work.llm_phrase = completion["phrase"]
             academic_work.llm_keywords = completion["topics"]
             session.commit()
             logger.info("Updated llm_summary for AcademicWork ID: %s", academic_work_id)
@@ -144,7 +153,8 @@ async def summarize_abstracts(
             logger.info("Using existing summary for AcademicWork ID: %s", academic_work_id)
             summaries_map[academic_work_id] = {
                 "summary": existing_completion[0],  # llm_summary
-                "topics": existing_completion[1],   # llm_keywords
+                "phrase": existing_completion[1],   # llm_phrase
+                "topics": existing_completion[2]    # llm_keywords
             }
         else:
             try:
@@ -166,6 +176,7 @@ async def summarize_abstracts(
         academic_work_id = result.get("id")
         if academic_work_id in summaries_map:
             result["summary"] = summaries_map[academic_work_id]["summary"]
+            result["phrase"] = summaries_map[academic_work_id]["phrase"]
             result["keywords"] = summaries_map[academic_work_id]["topics"]
 
     return search_results

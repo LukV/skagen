@@ -62,6 +62,7 @@ class AcademicWork(Base):
     authors = Column(JSON, nullable=True, default=[])
     authors_formatted = Column(String, nullable=True)
     core_id = Column(String, nullable=False)
+    links = Column(JSON, nullable=True, default=[])
     full_text = Column(String, nullable=True)
     published_date = Column(String, nullable=True)
     publisher = Column(JSON, nullable=True)
