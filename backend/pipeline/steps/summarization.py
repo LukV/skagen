@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
 client = OpenAI()
-
 logger = logging.getLogger(__name__)
 
 async def _perform_llm_summarization(abstract: str) -> dict:
@@ -119,7 +118,7 @@ def _update_llm_summary(session: Session, academic_work_id: str, completion: dic
         raise
 
 async def summarize_abstracts(
-        search_results: List[Dict[str, Any]], 
+        search_results: List[Dict[str, Any]],
         session: Session
 ) -> Dict[str, Any]:
     """

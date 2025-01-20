@@ -37,4 +37,15 @@ export default {
 .my-md p {
     margin-bottom: 12px;
 }
+
+.my-md h1, h2 {
+    line-height: 1.2;
+    margin-bottom: 12px;
+    font-weight: normal;
+}
+
+.my-md h1 {
+    padding-bottom: 6px;
+    border-bottom: 1px solid #ddd;
+}
 </style>

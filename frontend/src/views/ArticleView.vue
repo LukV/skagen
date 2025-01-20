@@ -90,7 +90,7 @@
             </v-row>
           </v-tabs-window-item>
           <v-tabs-window-item :value="2">
-            Under construction
+            <MarkdownRenderer :markdown="article?.llm_extended_summary || 'No content available.'" />
           </v-tabs-window-item>
           <v-tabs-window-item :value="3">
             <v-row>

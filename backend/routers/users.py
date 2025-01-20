@@ -5,7 +5,13 @@ from crud import users as crud_users
 from schemas import users as user_schemas
 from db.database import get_db
 from db import models
-from core.auth import get_current_user, hash_password, SECRET_KEY, ALGORITHM, create_password_reset_token
+from core.auth import (
+    get_current_user,
+    hash_password,
+    SECRET_KEY,
+    ALGORITHM,
+    create_password_reset_token
+)
 from core.utils import is_admin, is_admin_or_entity_owner, send_reset_email
 from jose import jwt
 
@@ -19,7 +25,10 @@ def create_user(
     """Create a new user in the database."""
     if crud_users.get_user_by_email(db, user.email) or \
         crud_users.get_user_by_username(db, user.username):
-        raise HTTPException(status_code=400, detail="Username or email already registered.")
+        raise HTTPException(
+            status_code=400,
+            detail="Username or email already registered."
+        )
     return crud_users.create_user(db, user)
 
 @router.get("/", response_model=List[user_schemas.UserResponse])
