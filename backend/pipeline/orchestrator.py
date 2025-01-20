@@ -3,6 +3,7 @@ import json
 import logging
 import time
 import os
+import traceback
 from sqlalchemy.orm import Session
 from messaging.redis import AsyncRedisClient
 from pipeline.steps.nlu import extract_topic_terms
@@ -54,7 +55,12 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
             # Publish status before executing the step
             await redis_client.publish(
                 "pipeline_updates",
-                json.dumps({"id": hypothesis_id, "step": step, "title": title, "time": time.time()})
+                json.dumps({
+                    "id": hypothesis_id, 
+                    "step": step, 
+                    "title": title, 
+                    "time": time.time()
+                })
             )
             await asyncio.sleep(0)  # Yield control to the event loop
 
@@ -70,6 +76,16 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
                 
                 # Check if query type is supported
                 if hypothesis.query_type != "research-based":
+                    await redis_client.publish(
+                        "pipeline_updates",
+                        json.dumps({
+                            "id": hypothesis_id,
+                            "step": step,
+                            "title": title,
+                            "error": f"Skipped: Query type '{hypothesis.query_type}' not handled.",
+                            "time": time.time()
+                        })
+                    )
                     hypothesis.status = "Skipped"
                     db.commit()
                     return f"Skipped: Query type '{hypothesis.query_type}' not handled."
@@ -141,15 +157,54 @@ async def start_validation_pipeline(hypothesis_id: str, db: Session):
 
     except (asyncio.TimeoutError, ValueError, TypeError, RuntimeError) as e:
         # Handle errors and mark hypothesis as failed
-        logger.error("Error during pipeline execution for hypothesis %s: %s", hypothesis_id, e)
+        error_type = type(e).__name__
+    
+        # Log the error with its type
+        logger.error("Error in step %s for hypothesis %s [%s]: %s", step, hypothesis_id, error_type, e)
         hypothesis.status = "Failed"
         db.commit()
         await redis_client.publish(
             "pipeline_updates",
             json.dumps({
-                "id": hypothesis_id, 
-                "step": "Failed", 
-                "error": str(e), 
-                "time": time.time()}
-            )
+                "id": hypothesis_id,
+                "step": step,
+                "title": title,
+                "error": f"An error occured: {str(error_type)}",
+                "time": time.time()
+            })
         )
+        return
+    
+    except Exception as e: # pylint: disable=W0718
+        error_type = type(e).__name__
+        error_traceback = traceback.format_exc()
+        
+        # Log the error with its type and traceback
+        logger.error(
+            "Error in step %s for hypothesis %s [%s]: %s\nTraceback:\n%s",
+            step,
+            hypothesis_id,
+            error_type,
+            e,
+            error_traceback
+        )
+        hypothesis.status = "Failed"
+        db.commit()
+        await redis_client.publish(
+            "pipeline_updates",
+            json.dumps({
+                "id": hypothesis_id,
+                "step": step,
+                "title": title,
+                "error": f"An error occured: {str(error_type)}",
+                "time": time.time()
+            })
+        )
+        return
+    
+    finally:
+        # Ensure status is updated appropriately
+        if hypothesis.status not in ["Completed", "Failed", "Skipped"]:
+            hypothesis.status = "Failed"
+            db.commit()
+

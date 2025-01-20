@@ -70,10 +70,10 @@ async def _fetch_results(
     base_url = "https://api.core.ac.uk/v3/search/works"
     headers = {"Authorization": f"Bearer {CORE_API_KEY}"}
 
-    params = {
+    params = httpx.QueryParams({
         "q": query,
         "limit": str(limit),
-    }
+    })
     if exclude_text:
         params["exclude"] = "fullText"
     if scroll:

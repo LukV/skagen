@@ -44,8 +44,8 @@ async def _perform_llm_summarization(abstract: str) -> dict:
                         "{\"summary\": \"<summary in Markdown format>\", \
                             \"phrase\": \"<phrase>\", \
                             \"topics\": [\"<topic1>\", \"<topic2>\"]}"
-                        "Please use valid JSON, and Markdown for the summary." 
-
+                        "All three elements summary, phrase, topics are required." 
+                        "Please use valid JSON, and Markdown for the summary."
                     ),
                 },
                 {"role": "user", "content": abstract},

@@ -74,6 +74,22 @@
                         </transition>
                     </div>
 
+                    <!-- Handle the FAILED state -->
+                    <div v-else-if="claimState === 'FAILED'">
+                        <div v-if="errors.length">
+                            <v-alert type="error" class="mt-4">
+                            <div v-for="(error, index) in errors" :key="index">
+                                Error: {{ error }}
+                            </div>
+                            </v-alert>
+                        </div>
+                        <div v-else>
+                            <v-alert type="error" class="mt-4">
+                                Validation failed: {{ claim.status }}
+                            </v-alert>
+                        </div>
+                    </div>
+
                     <!-- Otherwise show a warning if the status is not recognized -->
                     <div v-else>
                         <v-alert type="warning" class="mt-4">
@@ -175,6 +191,7 @@ export default {
             currentPipelineMessage: null,
             isProcessingQueue: false,
             displayDuration: 3000,
+            errors: []
         };
     },
 
@@ -182,6 +199,7 @@ export default {
         claimState() {
             if (!this.claim || this.claim.status === "Loading...") return "LOADING";
             if (["Pending", "Processing"].includes(this.claim.status)) return "IN_PROGRESS";
+            if (["Skipped", "Failed"].includes(this.claim.status)) return "FAILED";
             if (this.claim.status === "Completed") return "COMPLETED";
             return "UNKNOWN";
         },
@@ -244,6 +262,15 @@ export default {
                 const data = JSON.parse(event.data);
 
                 if (data.id !== this.id) return; // ignore others
+
+                // Handle errors in the SSE message
+                if (data.error) {
+                    this.errors.push(data.error);
+                    console.error("Pipeline error:", data.error);
+                    this.stopSSE();
+                    await this.fetchClaimData();
+                    return;
+                }
 
                 // Update partial data or progress message
                 this.pipelineQueue.push(data);
