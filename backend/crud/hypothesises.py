@@ -1,6 +1,8 @@
 from typing import List, Optional, Tuple
 from fastapi import HTTPException
+from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
+from sqlalchemy_pagination import paginate
 from schemas import hypothesises as hypothesis_schemas
 from db import models
 from core import utils
@@ -72,20 +74,56 @@ def delete_hypothesis(db: Session, hypothesis_id: str) -> Optional[models.Hypoth
         db.commit()
     return db_hypothesis
 
-def get_all_hypothesises(db: Session, current_user: models.User) -> List[models.Hypothesis]:
+def get_all_hypothesises(
+        db: Session,
+        current_user: models.User,
+        page: int,
+        per_page: int,
+        sort_by: Optional[str] = None,
+        sort_order: Optional[str] = "asc",
+        filters: Optional[dict] = None) -> dict:
     """
-    Retrieves all hypotheses from the database.
+    Retrieves all hypotheses from the database with optional sorting and filtering.
 
-    If the current user is an admin, retrieves all hypotheses.
-    Otherwise, retrieves only the hypotheses created by the user.
+    Parameters:
+        sort_by (str): The field to sort by.
+        sort_order (str): The sort order ('asc' or 'desc').
+        filters (dict): Dictionary of filters where keys are fields and values are filter values.
     """
-    if current_user.role == 'admin':   # pylint: disable=E1136
-        return db.query(models.Hypothesis).all()
+    if current_user.role == 'admin':  # pylint: disable=E1136
+        query = db.query(models.Hypothesis)
+    else:
+        query = db.query(models.Hypothesis).filter(
+            models.Hypothesis.user_id == current_user.id)
 
-    return db.query(models.Hypothesis) \
-        .filter(models.Hypothesis.user_id == current_user.id).all()
+    # Apply filters
+    if filters:
+        for key, value in filters.items():
+            if key == "content":
+                query = query.filter(getattr(models.Hypothesis, key).contains(value))
+            else:  # Default exact match
+                query = query.filter(getattr(models.Hypothesis, key) == value)
 
-def get_hypothesis_by_id(db: Session, hypothesis_id: str) -> Optional[models.Hypothesis]:
+
+    # Apply sorting
+    if sort_by:
+        sort_column = getattr(models.Hypothesis, sort_by, None)
+        if sort_column:
+            query = query.order_by(desc(sort_column) if sort_order == "desc" else asc(sort_column))
+
+    paginated_result = paginate(query, page, per_page)
+
+    return {
+        "total_pages": paginated_result.pages,
+        "total_items": paginated_result.total,
+        "current_page": page,
+        "items": paginated_result.items,
+    }
+
+def get_hypothesis_by_id(
+        db: Session,
+        hypothesis_id: str
+) -> Optional[models.Hypothesis]:
     """
     Fetches a hypothesis by their id.
     """

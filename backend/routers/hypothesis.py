@@ -1,8 +1,9 @@
-from typing import List
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, status
+from typing import List, Optional, Dict
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Query, status
 from sqlalchemy.orm import Session
 from crud import hypothesises as crud_hypothesises
 from schemas import hypothesises as hypothesis_schemas
+from schemas.common import PaginatedResponse
 from db.database import get_db
 from db import models
 from core.auth import get_current_user
@@ -21,15 +22,47 @@ def create_hypothesis(
     created_hypothesis = crud_hypothesises.create_hypothesis(db, hypothesis, current_user)
     return created_hypothesis
 
-@router.get("/", response_model=List[hypothesis_schemas.HypothesisResponse])
+@router.get("/", response_model=PaginatedResponse)
 def get_all_hypothesises(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(get_current_user),
+    page: int = Query(1, ge=1, description="Page number (1-based index)"),
+    per_page: int = Query(50, ge=1, le=100, description="Number of records per page (max 100)"),
+    sort_by: Optional[str] = Query(None, description="Field to sort by (e.g., 'created_at', 'title')"),
+    sort_order: Optional[str] = Query("asc", regex="^(asc|desc)$", description="Sort order ('asc' or 'desc')"),
+    content: Optional[str] = Query(None, description="Filter by content"),
+    status: Optional[str] = Query(None, description="Filter by status")
 ):
-    """Retrieve a list of all hypotheses, or only the user's hypotheses if not an admin."""
-    hypothesises = crud_hypothesises.get_all_hypothesises(db, current_user)
-    return [hypothesis_schemas.HypothesisResponse(**hypothesis.__dict__) \
-             for hypothesis in hypothesises]
+    """
+    Retrieve a list of all hypotheses, or only the user's hypotheses if not an admin.
+
+    Supports sorting and filtering by content and status.
+    """
+    filters = {}
+    if content:
+        filters["content"] = content
+    if status:
+        filters["status"] = status
+
+    hypotheses = crud_hypothesises.get_all_hypothesises(
+        db,
+        current_user,
+        page=page,
+        per_page=per_page,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        filters=filters,
+    )
+
+    return {
+        "total_pages": hypotheses["total_pages"],
+        "total_items": hypotheses["total_items"],
+        "current_page": hypotheses["current_page"],
+        "items": [
+            hypothesis_schemas.HypothesisResponse(**hypothesis.__dict__)
+            for hypothesis in hypotheses["items"]
+        ],
+    }
 
 @router.get("/{hypothesis_id}", response_model=hypothesis_schemas.HypothesisResponse)
 def get_hypothesis(

@@ -103,6 +103,9 @@ export default {
           password: this.password,
         });
 
+        // Refresh claims after login
+        await this.$store.dispatch('fetchHypotheses');
+
         // Primary fallback: Check for `redirect` query parameter
         const redirectPath = this.$route.query.redirect;
         if (redirectPath) {
@@ -136,6 +139,9 @@ export default {
 
       try {
         await this.googleLogin({ token });
+
+        // Refresh claims after login
+        await this.$store.dispatch('fetchHypotheses');
 
         const redirectPath = this.$route.query.redirect;
         if (redirectPath) {

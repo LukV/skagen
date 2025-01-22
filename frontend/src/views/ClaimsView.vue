@@ -218,6 +218,22 @@ export default {
         },
     },
 
+    watch: {
+        id: {
+            immediate: true, // Fetch data on initial load
+            handler(newId) {
+                this.fetchClaimData(newId);
+            },
+        },
+        'claim.status': {
+            handler(newStatus, oldStatus) {
+                if (oldStatus === 'Processing' && newStatus === 'Completed') {
+                    this.$store.dispatch('fetchHypotheses');
+                }
+            },
+        },
+    },
+
     methods: {
         async fetchClaimData() {
             try {

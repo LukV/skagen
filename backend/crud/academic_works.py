@@ -2,8 +2,6 @@ import asyncio
 import random
 import re
 import logging
-
-import time
 from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError

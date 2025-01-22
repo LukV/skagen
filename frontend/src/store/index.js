@@ -8,6 +8,7 @@ export default createStore({
         accessToken: localStorage.getItem('accessToken') || null,
         refreshToken: localStorage.getItem('refreshToken') || null,
         authStatus: 'pending', // 'pending', 'authenticated', 'unauthenticated'
+        hypotheses: [],
     },
     mutations: {
         SET_USER(state, user) {
@@ -27,6 +28,12 @@ export default createStore({
             state.authStatus = 'unauthenticated';
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
+        },
+        SET_HYPOTHESES(state, hypotheses) {
+            state.hypotheses = hypotheses;
+        },
+        CLEAR_HYPOTHESES(state) {
+            state.hypotheses = [];
         },
     },
     actions: {
@@ -62,7 +69,7 @@ export default createStore({
                 if (detail) {
                     throw detail;
                 } else {
-                    throw { code: "GENERIC_ERROR", message: "An error occurred. Please try again.", msgtype: "error" };
+                     throw { code: "GENERIC_ERROR", message: "An error occurred. Please try again.", msgtype: "error" };
                 }
             }
         },
@@ -79,6 +86,7 @@ export default createStore({
         },
         logout({ commit }) {
             commit('CLEAR_AUTH');
+            commit('CLEAR_HYPOTHESES')
         },
         async requestPasswordReset(_, payload) {
             try {
@@ -100,9 +108,24 @@ export default createStore({
                 throw error;
             }
         },
+        async fetchHypotheses({ commit }, params = {}) {
+            try {
+                const defaultParams = {
+                    status: 'Completed',
+                    sort_by: 'date_updated',
+                    sort_order: 'desc',
+                };
+                const queryParams = { ...defaultParams, ...params };
+                const response = await apiClient.get('/claims', { params: queryParams });
+                commit('SET_HYPOTHESES', response.data.items);
+            } catch (error) {
+                console.error("Failed to fetch hypotheses:", error);
+            }
+        },
     },
     getters: {
         isAuthenticated: (state) => state.authStatus === 'authenticated',
         getUser: (state) => state.user,
+        getHypotheses: (state) => state.hypotheses,
     },
 });

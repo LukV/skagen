@@ -12,9 +12,34 @@
             </v-btn>
         </div>
 
-        <v-list>
-            <v-list-item v-for="[icon, text] in main_links" :key="icon" :prepend-icon="icon" :title="text" link></v-list-item>
+        <v-list v-model:opened="open" density="compact">
+            <template v-slot:activator="{ props }">
+                <v-list-item v-bind="props" prepend-icon="mdi-bookshelf" title="Research"></v-list-item>
+            </template>
+            
         </v-list>
+
+        <v-list v-model:opened="open">
+      <v-list-item prepend-icon="mdi-bookshelf" title="Research"></v-list-item>
+
+      <v-list-group value="Claims">
+        <template v-slot:activator="{ props }">
+          <v-list-item
+            v-bind="props"
+            prepend-icon="mdi-alpha-c-circle"
+            title="Claims"
+          ></v-list-item>
+        </template>
+                <v-list-item
+                    v-for="(claim, index) in claims"
+                    :key="index"
+                    :subtitle="claim.content"
+                    @click="navigateToClaim(claim.id)"
+                    link
+                >
+                </v-list-item>
+      </v-list-group>
+    </v-list>
 
         <template v-slot:append>
             <v-divider></v-divider>
@@ -41,11 +66,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
+import { useStore } from 'vuex'
 import { useTheme } from 'vuetify'
 
 const theme = useTheme()
+const store = useStore()
 const darkMode = ref(false)
+const claims = computed(() => store.getters.getHypotheses)
+
+// Load claims on mount
+onMounted(() => {
+    store.dispatch('fetchHypotheses');
+});
 
 // Load user preference from localStorage on mount
 onMounted(() => {
@@ -75,9 +108,16 @@ export default {
     },
     emits: ['update:drawer'],
     data: () => ({
-        main_links: [
-            ["mdi-bookshelf", "Research"],
-            ["mdi-alpha-c-circle", "Claims"],
+        open: ['Users'],
+        admins: [
+            ['Management', 'mdi-account-multiple-outline'],
+            ['Settings', 'mdi-cog-outline'],
+        ],
+        cruds: [
+            ['Create', 'mdi-plus-outline'],
+            ['Read', 'mdi-file-outline'],
+            ['Update', 'mdi-update'],
+            ['Delete', 'mdi-delete'],
         ],
         bottom_links: [
             { title: "About", url: "https://vuetifyjs.com" },
@@ -89,6 +129,9 @@ export default {
         createNewThread() {
             this.$router.push("/new");
         },
+        navigateToClaim(id) {
+            this.$router.push(`/claims/${id}`);
+        }
     },
 };
 </script>
