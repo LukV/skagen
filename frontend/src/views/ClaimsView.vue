@@ -121,8 +121,9 @@
                                     <v-col>
                                         <p class="text-secondary">
                                             {{ source.citation }}
-                                            <v-btn icon size="xs" variant="plain" color="primary"
+                                            <v-btn size="xs" variant="plain" color="primary"
                                                 :href="`/articles/${source.work_id}`" rel="noopener"
+                                                append-icon="mdi-right-open" class="text-caption"
                                                 style="text-transform:none !important; letter-spacing: 0 !important;">
                                                 View article
                                             </v-btn>

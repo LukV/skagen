@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict
+from typing import List, Optional
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Query, status
 from sqlalchemy.orm import Session
 from crud import hypothesises as crud_hypothesises
@@ -8,7 +8,7 @@ from db.database import get_db
 from db import models
 from core.auth import get_current_user
 from core.utils import is_admin_or_entity_owner
-from pipeline.orchestrator import start_validation_pipeline
+from pipeline.orchestrator.manager import start_validation_pipeline
 
 router = APIRouter()
 
@@ -31,7 +31,7 @@ def get_all_hypothesises(
     sort_by: Optional[str] = Query(None, description="Field to sort by (e.g., 'created_at', 'title')"),
     sort_order: Optional[str] = Query("asc", regex="^(asc|desc)$", description="Sort order ('asc' or 'desc')"),
     content: Optional[str] = Query(None, description="Filter by content"),
-    status: Optional[str] = Query(None, description="Filter by status")
+    hypothesis_status: Optional[str] = Query(None, description="Filter by status")
 ):
     """
     Retrieve a list of all hypotheses, or only the user's hypotheses if not an admin.
@@ -41,8 +41,8 @@ def get_all_hypothesises(
     filters = {}
     if content:
         filters["content"] = content
-    if status:
-        filters["status"] = status
+    if hypothesis_status:
+        filters["status"] = hypothesis_status
 
     hypotheses = crud_hypothesises.get_all_hypothesises(
         db,
