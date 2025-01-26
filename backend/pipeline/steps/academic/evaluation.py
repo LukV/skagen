@@ -51,7 +51,7 @@ async def _prepare_prompt(hypothesis_content: str, search_results: List[Dict[str
             or contradictory.\n"
         "   - `[C] Inconclusive`: Evidence is neutral or conflicting.\n"
         "   - `[D] Refuted`: Evidence disagrees with the hypothesis.\n\n"
-        "2. **Motivation**: Provide a concise explanation on your for the classification.:\n"
+        "2. **Motivation**: Provide a concise explanation for your classification:\n"
         "   - Brief summary of the overall findings.\n"
         "   - Per paper a list item including citation:\n"
         "     - Citation: Supports the hypothesis by showing evidence of...\n"
@@ -85,7 +85,7 @@ async def _perform_llm_summarization(prompt: str) -> Dict[str, Any]:
                 "role": "system", 
                 "content": "You are concise, factual assistant tasked with \
                     evaluating academic search results to support or refute \
-                         a user'shypothesis."},
+                         a user's hypothesis."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.0  # lower temperature => less creativity, more accuracy

@@ -13,8 +13,12 @@
                 <template v-else-if="hasExtractedTopics">
                     <transition name="fade">
                         <div>
-                            <v-chip v-for="(topic, index) in claim.extracted_topics" :key="index"
-                                class="me-2 mb-4 text-caption" rounded>
+                            <v-chip
+                                v-for="(topic, index) in claim.extracted_topics"
+                                :key="index"
+                                class="me-2 mb-4 text-caption"
+                                rounded
+                            >
                                 {{ topic }}
                             </v-chip>
                         </div>
@@ -46,9 +50,11 @@
                     <!-- If the claim is completed, show classification -->
                     <div v-if="claimState === 'COMPLETED'">
                         <transition name="fade">
-                            <div v-if="validation[0]?.classification"
+                            <div
+                                v-if="validation[0]?.classification"
                                 :class="getClassification(validation[0]?.classification).boxClass"
-                                class="custom-box pa-4">
+                                class="custom-box pa-4"
+                            >
                                 {{ getClassification(validation[0]?.classification).classification }}
                             </div>
                         </transition>
@@ -78,9 +84,9 @@
                     <div v-else-if="claimState === 'FAILED'">
                         <div v-if="errors.length">
                             <v-alert type="error" class="mt-4">
-                            <div v-for="(error, index) in errors" :key="index">
-                                Error: {{ error }}
-                            </div>
+                                <div v-for="(error, index) in errors" :key="index">
+                                    Error: {{ error }}
+                                </div>
                             </v-alert>
                         </div>
                         <div v-else>
@@ -110,8 +116,13 @@
                             Sources
                         </h4>
                         <div class="d-flex flex-row overflow-auto source-scroller">
-                            <v-card v-for="(source, index) in validation[0]?.sources" :key="index"
-                                class="pa-4 me-4 mb-4" outlined style="min-width: 300px; max-width: 300px;">
+                            <v-card
+                                v-for="(source, index) in validation[0]?.sources"
+                                :key="index"
+                                class="pa-4 me-4 mb-4"
+                                outlined
+                                style="min-width: 300px; max-width: 300px;"
+                            >
                                 <v-row no-gutters>
                                     <v-col cols="auto">
                                         <div class="source-index text-caption mt-1">
@@ -121,10 +132,16 @@
                                     <v-col>
                                         <p class="text-secondary">
                                             {{ source.citation }}
-                                            <v-btn size="xs" variant="plain" color="primary"
-                                                :href="`/articles/${source.work_id}`" rel="noopener"
-                                                append-icon="mdi-right-open" class="text-caption"
-                                                style="text-transform:none !important; letter-spacing: 0 !important;">
+                                            <v-btn
+                                                size="xs"
+                                                variant="plain"
+                                                color="primary"
+                                                :href="`/articles/${source.work_id}`"
+                                                rel="noopener"
+                                                append-icon="mdi-right-open"
+                                                class="text-caption"
+                                                style="text-transform:none !important; letter-spacing: 0 !important;"
+                                            >
                                                 View article
                                             </v-btn>
                                         </p>
@@ -140,8 +157,13 @@
                     <div v-if="claimState === 'COMPLETED'" class="mt-8 claim-balloon">
                         <v-row class="d-flex justify-end">
                             <v-col cols="auto">
-                                <v-sheet rounded="xl" class="mx-auto pa-4" color="secondary" :min-width="200"
-                                    :max-width="450">
+                                <v-sheet
+                                    rounded="xl"
+                                    class="mx-auto pa-4"
+                                    color="secondary"
+                                    :min-width="200"
+                                    :max-width="450"
+                                >
                                     {{ claim?.content }}
                                 </v-sheet>
                             </v-col>
@@ -159,7 +181,9 @@
                                 </div>
                             </v-col>
                             <v-col>
-                                <MarkdownRenderer :markdown="validation[0]?.motivation || 'No content available.'" />
+                                <MarkdownRenderer
+                                    :markdown="validation[0]?.motivation || 'No content available.'"
+                                />
                             </v-col>
                         </v-row>
                     </div>
@@ -191,8 +215,8 @@ export default {
             pipelineQueue: [],
             currentPipelineMessage: null,
             isProcessingQueue: false,
-            displayDuration: 3000,
-            errors: []
+            displayDuration: 2000,
+            errors: [],
         };
     },
 
@@ -205,17 +229,11 @@ export default {
             return "UNKNOWN";
         },
         hasExtractedTopics() {
-            return (
-                this.claim?.extracted_topics &&
-                this.claim.extracted_topics.length > 0
-            );
+            return this.claim?.extracted_topics && this.claim.extracted_topics.length > 0;
         },
         isExtractingTopics() {
             // If we’re in progress and no topics yet, we show spinner
-            return (
-                this.claimState === "IN_PROGRESS" &&
-                !this.hasExtractedTopics
-            );
+            return this.claimState === "IN_PROGRESS" && !this.hasExtractedTopics;
         },
     },
 
@@ -226,10 +244,10 @@ export default {
                 this.fetchClaimData(newId);
             },
         },
-        'claim.status': {
+        "claim.status": {
             handler(newStatus, oldStatus) {
-                if (oldStatus === 'Processing' && newStatus === 'Completed') {
-                    this.$store.dispatch('fetchHypotheses');
+                if (oldStatus === "Processing" && newStatus === "Completed") {
+                    this.$store.dispatch("fetchHypotheses");
                 }
             },
         },
@@ -239,19 +257,33 @@ export default {
         async fetchClaimData() {
             try {
                 const claimResponse = await apiClient.get(`/claims/${this.id}`);
+                // Merge old claim into the new one so we don't lose local fields like extracted_topics
                 this.claim = { ...this.claim, ...claimResponse.data };
 
-                // Based on the claim’s status, either start SSE, trigger the pipeline,
-                // or fetch validations if already completed
+                // If the claim is pending, attempt to see if validations are already present
+                // If validations are present as an array, skip the pipeline? Or run it?
+                // If validations are an object, skip the pipeline (new edge case).
                 if (this.claim.status === "Pending") {
-                    await this.triggerValidationPipeline();
+                    const fetchedData = await this.fetchValidations();
+                    if (
+                        fetchedData &&
+                        typeof fetchedData === "object" &&
+                        !Array.isArray(fetchedData)
+                    ) {
+                        // We have that "object" edge case => skip pipeline
+                        console.info("fetchValidations returned an object. Skipping pipeline.");
+                    } else {
+                        // Normal scenario => trigger the pipeline
+                        await this.triggerValidationPipeline();
+                    }
                 } else if (this.claim.status === "Processing") {
+                    // If claim is in "Processing", start SSE
                     this.startSSE();
                 } else if (this.claim.status === "Completed") {
+                    // If the claim is completed, fetch the validations
                     await this.fetchValidations();
                 }
                 // Handle other statuses if needed (Failed, Skipped, etc.)
-
             } catch (error) {
                 console.error("Error fetching claim data:", error);
             }
@@ -269,6 +301,18 @@ export default {
             }
         },
 
+        async fetchValidations() {
+            try {
+                const validationResponse = await apiClient.get(`/claims/${this.id}/validations`);
+                this.validation = validationResponse.data;
+                // Return the raw data in case we need to check its shape 
+                return validationResponse.data;
+            } catch (error) {
+                console.error("Error fetching validation data:", error);
+                return null;
+            }
+        },
+
         startSSE() {
             this.stopSSE();
             const sseUrl = `${apiClient.defaults.baseURL}/sse/progress/${this.id}`;
@@ -278,13 +322,14 @@ export default {
             this.sseSource.onmessage = async (event) => {
                 const data = JSON.parse(event.data);
 
-                if (data.id !== this.id) return; // ignore others
+                if (data.id !== this.id) return; // ignore SSE for other claims
 
                 // Handle errors in the SSE message
                 if (data.error) {
                     this.errors.push(data.error);
                     console.error("Pipeline error:", data.error);
                     this.stopSSE();
+                    // Re-fetch so we get updated claim status (likely "Failed")
                     await this.fetchClaimData();
                     return;
                 }
@@ -293,16 +338,18 @@ export default {
                 this.pipelineQueue.push(data);
                 this.processPipelineQueue();
 
+                // If we get extracted topics in comment, parse them out
                 if (data.step === "ExtractingTopics" && data.comment) {
                     this.processExtractedTopics(data.comment);
-                    data.comment = '';
+                    // We remove the comment so it doesn't appear in the UI
+                    data.comment = "";
                 }
 
                 // If final SSE step arrives, do a final fetch
-                if (data.step === "EvaluatingHypothesis" && data.comment) {
+                if (data.step === "Finished") {
                     // The pipeline is finished. 
                     this.stopSSE();
-                    // **Re-fetch** so the claim now has the final topics
+                    // **Re-fetch** so the claim now has the final topics, final status, etc.
                     await this.fetchClaimData();
                 }
             };
@@ -356,15 +403,6 @@ export default {
             };
 
             displayNext();
-        },
-
-        async fetchValidations() {
-            try {
-                const validationResponse = await apiClient.get(`/claims/${this.id}/validations`);
-                this.validation = validationResponse.data;
-            } catch (error) {
-                console.error("Error fetching validation data:", error);
-            }
         },
 
         formattedDate(date) {
@@ -518,13 +556,11 @@ export default {
 }
 
 @keyframes pulse {
-
     0%,
     100% {
         opacity: 0.7;
         filter: brightness(100%);
     }
-
     50% {
         opacity: 1;
         filter: brightness(120%);

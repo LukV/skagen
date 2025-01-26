@@ -16,6 +16,8 @@ class QueryType(str, Enum):
     RESEARCH_BASED = "research-based"
     FACTUAL = "factual"
     ABSTRACT = "abstract"
+    DEFINITIONAL = "definitional"
+    SUBJECTIVE = "subjective"
 
 class HypothesisCreate(BaseModel):
     content: str = Field(

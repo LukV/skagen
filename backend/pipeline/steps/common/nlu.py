@@ -5,57 +5,40 @@ client = OpenAI()
 
 async def extract_topic_terms(text: str) -> dict:
     """
-    Uses one LLM prompt to extract:
-      1) named_entities
-      2) keywords
-      3) topics
-    Returns a dict with keys: 'named_entities', 'keywords', 'topics'.
+    Enhanced LLM-based NLU to categorize claims.
     """
     prompt = f"""
-    Please (1) extract data from the text below and (2) define the `query_type`. 
-    The `query_type` should be one of the following: 'research-based', 'factual', or 'abstract'.
+    Classify the text below into one of the following `query_type` categories:
+      - factual: Objective, verifiable facts (e.g., "The Berlin Wall fell in 1989.").
+      - definitional: Claims requiring general evidence from the web (e.g., "5G technology causes cancer.").
+      - research-based: Requires academic evidence (e.g., "Social media impacts mental health.").
+      - abstract: Interpretative or philosophical ideas (e.g., "Nietzsche’s philosophy emphasizes ambition.").
+      - subjective: Personal opinions or preferences (e.g., "Roses are prettier than tulips.").
+      - unknown: If the category is unclear or ambiguous.
 
-    1.	Query Types
-	•	Factual: Simple, objective statements.
-	•	Research-Based: Statements requiring evidence from academic literature.
-	•	Abstract: Philosophical or interpretive ideas that lack a strict evidence base.
-	2.	Query Type Definitions
-	•	Factual:
-	•	Example: “The UN headquarters are in New York.”
-	•	Requires structured, factual sources (e.g., Wikidata, encyclopedias).
-	•	Research-Based:
-	•	Example: “Social media have a negative impact on children’s concentration.”
-	•	Requires scholarly evidence (e.g., PubMed, CORE).
-	•	Abstract:
-	•	Example: “Nietzsche’s emphasis on the ‘will to power’ suggests that ambition stimulates innovation.”
-	•	Requires interpretation and discourse, best handled by LLMs.
-    
-    Output valid JSON with double quotes, e.g. `"United Nations"` and no extra keys.
+    Also extract:
+      - named_entities: Entities like persons, organizations, locations.
+      - keywords: Key phrases from the claim.
+      - topics: Up to 3 broad topics.
 
     Text:
     \"{text}\"
 
-    Return a JSON object with exactly these keys:
-    1. named_entities: an array of strings representing persons, organizations, or locations (multi-word allowed).
-    2. keywords: an array of strings representing key phrases from the text (multi-word allowed).
-    3. topics: an array of up to 3 broad conceptual topics relevant to the text.
-
-    Output must be valid JSON with double quotes and no extra keys. For example:
+    Return valid JSON:
     {{
       "named_entities": [],
       "keywords": [],
       "topics": [],
-      "query_type": "research-based"
+      "query_type": "factual/definitional/research-based/abstract/subjective/unknown"
     }}
     """
-
     response = client.chat.completions.create(
-        model="gpt-4o",  # or "gpt-4o-mini", "gpt-3.5-turbo", etc.
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "You are a concise, factual assistant."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.0  # lower temperature => less creativity, more accuracy
+        temperature=0.0
     )
 
     content = response.choices[0].message.content
@@ -70,7 +53,8 @@ async def extract_topic_terms(text: str) -> dict:
         parsed = {
             "named_entities": [],
             "keywords": [],
-            "topics": []
+            "topics": [],
+            "query_type": "unknown"
         }
 
     return parsed
