@@ -159,7 +159,7 @@ async def _perform_llm_summerization(text: str) -> dict:
     try:
         response = await _retry_request(
             client.chat.completions.create,
-            model="gpt-4o",
+            model="gpt-4.1",
             messages=[
                 {
                     "role": "system",

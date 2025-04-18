@@ -27,7 +27,7 @@ async def _perform_llm_summarization(abstract: str) -> dict:
     """
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4.1",
             messages=[
                 {
                     "role": "system",

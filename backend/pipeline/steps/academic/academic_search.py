@@ -42,7 +42,7 @@ async def _build_search_query(hypothesis: Hypothesis, max_length: int = 80) -> s
     )
 
     response = client.chat.completions.create(
-        model="gpt-4o",  # or "gpt-4o-mini", "gpt-3.5-turbo", etc.
+        model="gpt-4.1",  # or "gpt-4o-mini", "gpt-3.5-turbo", etc.
         messages=[
             {"role": "system", "content": "You are a concise, factual assistant."},
             {"role": "user", "content": prompt}

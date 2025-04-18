@@ -111,44 +111,86 @@
                 <!-- Sources Section (only if completed) -->
                 <transition name="fade">
                     <div v-if="claimState === 'COMPLETED'">
-                        <h4 class="text-h8 mb-2">
-                            <v-icon size="small">mdi-text</v-icon>
-                            Sources
-                        </h4>
-                        <div class="d-flex flex-row overflow-auto source-scroller">
-                            <v-card
-                                v-for="(source, index) in validation[0]?.sources"
-                                :key="index"
-                                class="pa-4 me-4 mb-4"
-                                outlined
-                                style="min-width: 300px; max-width: 300px;"
-                            >
-                                <v-row no-gutters>
-                                    <v-col cols="auto">
-                                        <div class="source-index text-caption mt-1">
-                                            {{ index + 1 }}
-                                        </div>
-                                    </v-col>
-                                    <v-col>
-                                        <p class="text-secondary">
-                                            {{ source.citation }}
-                                            <v-btn
-                                                size="xs"
-                                                variant="plain"
-                                                color="primary"
-                                                :href="`/articles/${source.work_id}`"
-                                                rel="noopener"
-                                                append-icon="mdi-right-open"
-                                                class="text-caption"
-                                                style="text-transform:none !important; letter-spacing: 0 !important;"
-                                            >
-                                                View article
-                                            </v-btn>
-                                        </p>
-                                    </v-col>
-                                </v-row>
-                            </v-card>
-                        </div>
+                        <div v-if="claim.query_type === 'factual'">
+                            <h4 class="text-h8 mb>2">
+                                <v-icon size="small">mdi-wikipedia</v-icon>
+                                Wikipedia sources
+                            </h4>
+                            <div class="d-flex flex-row overflow-auto source-scroller">
+                                <v-card
+                                    v-for="(source, index) in validation[0]?.sources"
+                                    :key="index"
+                                    class="pa-4 me-4 mb-4"
+                                    outlined
+                                    style="min-width: 300px; max-width: 300px;"
+                                >
+                                    <v-row no-gutters>
+                                        <v-col cols="auto">
+                                            <div class="source-index text-caption mt-1">
+                                                {{ index + 1 }}
+                                            </div>
+                                        </v-col>
+                                        <v-col>
+                                            <p class="text-secondary">
+                                                {{ source?.summary.substring(0, 200) }}
+                                                <v-btn
+                                                    size="xs"
+                                                    variant="plain"
+                                                    color="primary"
+                                                    :href="source.url"
+                                                    rel="noopener"
+                                                    append-icon="mdi-right-open"
+                                                    class="text-caption"
+                                                    style="text-transform:none !important; letter-spacing: 0 !important;"
+                                                >
+                                                    View on Wikipedia
+                                                </v-btn>
+                                            </p>
+                                        </v-col>
+                                    </v-row>
+                                </v-card>
+                            </div>
+                        </div>  
+                        <div v-else>  
+                            <h4 class="text-h8 mb-2">
+                                <v-icon size="small">mdi-text</v-icon>
+                                Sources
+                            </h4>
+                            <div class="d-flex flex-row overflow-auto source-scroller">
+                                <v-card
+                                    v-for="(source, index) in validation[0]?.sources"
+                                    :key="index"
+                                    class="pa-4 me-4 mb-4"
+                                    outlined
+                                    style="min-width: 300px; max-width: 300px;"
+                                >
+                                    <v-row no-gutters>
+                                        <v-col cols="auto">
+                                            <div class="source-index text-caption mt-1">
+                                                {{ index + 1 }}
+                                            </div>
+                                        </v-col>
+                                        <v-col>
+                                            <p class="text-secondary">
+                                                {{ source?.citation }}
+                                                <v-btn
+                                                    size="xs"
+                                                    variant="plain"
+                                                    color="primary"
+                                                    :href="`/articles/${source.work_id}`"
+                                                    rel="noopener"
+                                                    append-icon="mdi-right-open"
+                                                    class="text-caption"
+                                                    style="text-transform:none !important; letter-spacing: 0 !important;"
+                                                >
+                                                    View article
+                                                </v-btn>
+                                            </p>
+                                        </v-col>
+                                    </v-row>
+                                </v-card>
+                            </div>
+                        </div>  
                     </div>
                 </transition>
 
@@ -436,7 +478,7 @@ export default {
                 case "A":
                     return {
                         boxClass: "green-box",
-                        classification: "Evidence agrees with the hypothesis.",
+                        classification: "Evidence agrees with the claim.",
                     };
                 case "B":
                     return {
@@ -452,7 +494,7 @@ export default {
                 case "D":
                     return {
                         boxClass: "red-box",
-                        classification: "Refuted: Evidence disagrees with the hypothesis.",
+                        classification: "Refuted: Evidence disagrees with the claim.",
                     };
                 default:
                     return {

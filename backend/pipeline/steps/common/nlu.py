@@ -33,7 +33,7 @@ async def extract_topic_terms(text: str) -> dict:
     }}
     """
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         messages=[
             {"role": "system", "content": "You are a concise, factual assistant."},
             {"role": "user", "content": prompt}

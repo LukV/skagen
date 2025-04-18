@@ -71,8 +71,7 @@ async def factual_search_step(hypothesis: Hypothesis, max_results: int = 3):
             article_data.append({
                 "title": page.title,
                 "summary": page.summary,
-                "url": page.fullurl,
-                "text": page.text
+                "url": page.fullurl
             })
 
             if len(article_data) >= max_results:

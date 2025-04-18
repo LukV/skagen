@@ -61,3 +61,4 @@ ulid-py==1.1.0
 urllib3==2.2.3
 uvicorn==0.32.1
 wikipedia==1.4.0
+Wikipedia-API==0.8.1

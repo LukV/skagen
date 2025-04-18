@@ -57,7 +57,7 @@ async def _perform_llm_summarization(prompt: str) -> Dict[str, Any]:
     input prompt.
     """
     response = client.chat.completions.create(
-        model="gpt-4o",  # or "gpt-4o-mini", "gpt-3.5-turbo", etc.
+        model="gpt-4.1",  # or "gpt-4o-mini", "gpt-3.5-turbo", etc.
         messages=[
             {
                 "role": "system", 
